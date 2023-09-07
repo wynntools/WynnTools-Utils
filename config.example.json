@@ -4,21 +4,20 @@
     "clientId": "DISCORD_BOT_CLIENT_ID",
     "devServer": "DEV_SERVER_ID_FOR_TESTING",
     "devId": "DEV_USER_ID",
-    "embeds": { "red": "#EF3333", "green": "#33EF33" },
     "channels": {
+      "logger": "LOGGING_CHANNEL_ID",
       "support": "SUPPORT_CHANNEL_ID",
       "noCommandTracking": ["NO_COMMAND_TRACKING_CHANNEL_ID"]
     },
-    "commands": {
-      "report-bug": "REPORT_BUG_COMMAND_ID"
-    },
+    "commands": { "report-bug": "REPORT_BUG_COMMAND_ID" },
     "roles": { "dev": "DEV_ROLE_ID" },
     "supportInvite": "SUPPORT_SERVER_INVITE",
     "botInvite": "BOT_INVITE_URL",
-    "emojis": { "yes": "✅", "no": "❌" },
     "buttonTimeout": 30
   },
   "other": {
+    "colors": { "red": "#EF3333", "orange": "#DC602E", "green": "#33EF33" },
+    "emojis": { "yes": "✅", "no": "❌" },
     "logo": "https://i.imgur.com/uUuZx2E.png",
     "timezone": null,
     "errorIdLength": 15,

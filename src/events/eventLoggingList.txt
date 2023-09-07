@@ -1,0 +1,18 @@
+guild update
+invite create
+invite delete
+reaction delete
+reaction delete all
+emoji create
+emoji delete
+emoji update
+message bulk delete
+message reaction remove
+message reaction all
+sticker create
+sticker delete
+sticker update
+thread create
+thread delete
+thread update
+voice state updated

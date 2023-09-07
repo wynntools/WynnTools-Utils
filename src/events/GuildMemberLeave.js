@@ -4,13 +4,13 @@ const { Events, EmbedBuilder } = require('discord.js');
 const config = require('../../config.json');
 
 module.exports = {
-  name: Events.GuildMemberAdd,
+  name: Events.GuildMemberRemove,
   async execute(member) {
     try {
       if (member.guild.id != config.discord.devServer) return;
-      const memberJoinLoggerEmbed = new EmbedBuilder()
-        .setDescription(`Member Joined (${member.user.id})`)
-        .setColor(config.colors.green)
+      const memberLeaveLoggerEmbed = new EmbedBuilder()
+        .setDescription(`Member Left (${member.user.id})`)
+        .setColor(config.other.colors.red)
         .addFields(
           {
             name: 'User',
@@ -20,6 +20,11 @@ module.exports = {
           {
             name: 'Account Created',
             value: `<t:${member.user.createdTimestamp}:F> (<t:${member.user.createdTimestamp}:R>)`,
+            inline: true,
+          },
+          {
+            name: 'Account Joined',
+            value: `<t:${member.joinedTimestamp}:F> (<t:${member.joinedTimestamp}:R>)`,
             inline: true,
           },
           {
@@ -40,8 +45,8 @@ module.exports = {
 
       var loggerChannel = member.guild.channels.cache.get(config.discord.channels.logger);
       await loggerChannel.send({
-        content: `User Joined - ${member.user.id}`,
-        embeds: [memberJoinLoggerEmbed],
+        content: `User Left - <@${member.user.id}>`,
+        embeds: [memberLeaveLoggerEmbed],
       });
     } catch (error) {
       var errorId = generateID(config.other.errorIdLength);
