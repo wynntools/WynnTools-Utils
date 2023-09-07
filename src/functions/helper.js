@@ -96,6 +96,38 @@ function cleanMessage(message) {
   return message.toString().replaceAll('Error: ', '').replaceAll('`', '').replaceAll('ez', 'easy');
 }
 
+function convertChannelType(type) {
+  if (type === 0) {
+    return 'GuildText';
+  } else if (type === 1) {
+    return 'DM';
+  } else if (type === 2) {
+    return 'GuildVoice';
+  } else if (type === 3) {
+    return 'GroupDM';
+  } else if (type === 4) {
+    return 'GuildCategory';
+  } else if (type === 5) {
+    return 'GuildAnnouncement';
+  } else if (type === 10) {
+    return 'AnnouncementThread';
+  } else if (type === 11) {
+    return 'PublicThread';
+  } else if (type === 12) {
+    return 'PrivateThread';
+  } else if (type === 13) {
+    return 'GuildStageVoice';
+  } else if (type === 14) {
+    return 'GuildDirectory';
+  } else if (type === 15) {
+    return 'GuildForum';
+  } else if (type === 16) {
+    return 'GuildMedia';
+  } else {
+    return 'Unknown';
+  }
+}
+
 module.exports = {
   generateID,
   getCurrentTime,
@@ -103,4 +135,5 @@ module.exports = {
   blacklistCheck,
   toFixed,
   cleanMessage,
+  convertChannelType,
 };

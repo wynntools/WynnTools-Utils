@@ -1,5 +1,5 @@
+const { generateID, toFixed, convertChannelType } = require('../functions/helper.js');
 const { errorMessage } = require('../functions/logger.js');
-const { generateID } = require('../functions/helper.js');
 const { Events, EmbedBuilder } = require('discord.js');
 const config = require('../../config.json');
 
@@ -8,19 +8,32 @@ module.exports = {
   async execute(channel) {
     try {
       if (channel.guild.id != config.discord.devServer) return;
-      const channelDeleteLoggerEmbed = new EmbedBuilder()
-        .setDescription(`Channel Deleted - ${channel.name} (${channel.id}) - <#${channel.id}>`)
+      const channelDeletedLoggerEmbed = new EmbedBuilder()
+        .setDescription(`**${channel.name}** Deleted <#${channel.id}>`)
         .setColor(config.other.colors.red)
         .addFields(
           {
-            name: 'User',
-            value: 'when i work out how to get this i will add it',
-            inline: true,
+            name: 'Name',
+            value: `${channel.name} (${channel.id})`,
+            inline: false,
           },
           {
-            name: 'Channel',
-            value: `<t:${channel.createdTimestamp}:F> (<t:${channel.createdTimestamp}:R>) - ${channel.name} (${channel.id})`,
-            inline: true,
+            name: 'Creation',
+            value: `<t:${toFixed(channel.createdTimestamp / 1000, 0)}:F> (<t:${toFixed(
+              channel.createdTimestamp / 1000,
+              0
+            )}:R>)`,
+            inline: false,
+          },
+          {
+            name: 'Type',
+            value: `${convertChannelType(channel.type)}`,
+            inline: false,
+          },
+          {
+            name: 'User',
+            value: 'when i work out how to get this i will add it',
+            inline: false,
           }
         )
         .setTimestamp()
@@ -31,8 +44,8 @@ module.exports = {
 
       var loggerChannel = channel.guild.channels.cache.get(config.discord.channels.logger);
       await loggerChannel.send({
-        content: `Channel Deleted - ${channel.id}`,
-        embeds: [channelDeleteLoggerEmbed],
+        content: `Channel Created - ${channel.id}`,
+        embeds: [channelDeletedLoggerEmbed],
       });
     } catch (error) {
       var errorId = generateID(config.other.errorIdLength);

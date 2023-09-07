@@ -1,5 +1,5 @@
+const { generateID, toFixed } = require('../functions/helper.js');
 const { errorMessage } = require('../functions/logger.js');
-const { generateID } = require('../functions/helper.js');
 const { Events, EmbedBuilder } = require('discord.js');
 const config = require('../../config.json');
 
@@ -9,23 +9,30 @@ module.exports = {
     try {
       if (oldChannel.guild.id != config.discord.devServer) return;
       const channelUpdateLoggerEmbed = new EmbedBuilder()
-        .setDescription(`Channel Updated - ${oldChannel.name} (${oldChannel.id}) - <#${oldChannel.id}>`)
+        .setDescription(`**${newChannel.name}** Updated <#${newChannel.id}>`)
         .setColor(config.other.colors.orange)
         .addFields(
           {
-            name: 'User',
-            value: 'when i work out how to get this i will add it',
-            inline: true,
-          },
-          {
             name: 'Old Channel',
-            value: `<t:${oldChannel.createdTimestamp}:F> (<t:${oldChannel.createdTimestamp}:R>) - ${oldChannel.name} (${oldChannel.id})`,
-            inline: true,
+            value: `<t:${toFixed(oldChannel.createdTimestamp / 1000, 0)}:F> (<t:${toFixed(
+              oldChannel.createdTimestamp / 1000,
+              0
+            )}:R>) - ${oldChannel.name} (${oldChannel.id})`,
+            inline: false,
           },
           {
             name: 'New Channel',
-            value: `<t:${newChannel.createdTimestamp}:F> (<t:${newChannel.createdTimestamp}:R>) - ${newChannel.name} (${newChannel.id})`,
-            inline: true,
+            value: `<t:${toFixed(newChannel.createdTimestamp / 1000, 0)}:F> (<t:${toFixed(
+              newChannel.createdTimestamp / 1000,
+              0
+            )}:R>) - ${newChannel.name} (${newChannel.id})`,
+            inline: false,
+          },
+
+          {
+            name: 'User',
+            value: 'when i work out how to get this i will add it',
+            inline: false,
           }
         )
         .setTimestamp()

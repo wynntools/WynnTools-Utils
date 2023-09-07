@@ -21,7 +21,6 @@ module.exports = {
             name: 'Invite Info',
             value: `Channel: <#${invite.channel.id}> (${invite.channel.id})\nCode: ${invite.code}\nMax Uses: ${invite.maxUses}\nMax Age: ${invite.maxAge} seconds\nTemporary: ${invite.temporary}\nCreated - <t:${invite.createdTimestamp}:F> (<t:${invite.createdTimestamp}:R>)`,
             // https://discord.js.org/#/docs/discord.js/main/class/Invite?scrollTo=uses
-            // https://github.com/pterodactyl/panel/issues/2486
             inline: true,
           },
           {

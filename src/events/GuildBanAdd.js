@@ -1,5 +1,5 @@
+const { generateID, toFixed } = require('../functions/helper.js');
 const { errorMessage } = require('../functions/logger.js');
-const { generateID } = require('../functions/helper.js');
 const { Events, EmbedBuilder } = require('discord.js');
 const config = require('../../config.json');
 
@@ -14,18 +14,34 @@ module.exports = {
         .addFields(
           {
             name: 'User',
-            value: `${ban.user.globalName} - @${ban.user.username} (${ban.user.id}) - <@${ban.user.id}>\nCreated -<t:${ban.user.createdTimestamp}:F> (<t:${ban.user.createdTimestamp}:R>)\nJoined - <t:${ban.joinedTimestamp}:F> (<t:${ban.joinedTimestamp}:R>)`,
-            inline: true,
+            value: `${
+              ban.user.globalName
+                ? `${ban.user.globalName} (${
+                    ban.user.discriminator == '0'
+                      ? `@${ban.user.username}`
+                      : `${ban.user.username}#${ban.user.discriminator}`
+                  })`
+                : ban.user.discriminator == '0'
+                ? `@${ban.user.username}`
+                : `${ban.user.username}#${ban.user.discriminator}`
+            } - ${ban.user.id} <@${ban.user.id}>\n\n\nAccount Create Date: <t:${toFixed(
+              ban.user.createdTimestamp / 1000,
+              0
+            )}:F> (<t:${toFixed(ban.user.createdTimestamp / 1000, 0)}:R>)\nJoin Date: <t:${toFixed(
+              ban.joinedTimestamp / 1000,
+              0
+            )}:F> (<t:${toFixed(ban.joinedTimestamp / 1000, 0)}:R>)`,
+            inline: false,
           },
           {
             name: 'Reason',
             value: ban.reason,
-            inline: true,
+            inline: false,
           },
           {
             name: 'Staff',
             value: ':shrug:',
-            inline: true,
+            inline: false,
           }
         )
         .setTimestamp()

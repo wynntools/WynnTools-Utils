@@ -1,11 +1,11 @@
 const { writeAt, toFixed, generateID, blacklistCheck, cleanMessage } = require('../functions/helper.js');
-const { ActionRowBuilder, ButtonBuilder, EmbedBuilder, ButtonStyle } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, EmbedBuilder, ButtonStyle, Events } = require('discord.js');
 const { commandMessage, errorMessage } = require('../functions/logger.js');
 const config = require('../../config.json');
 const fs = require('fs');
 
 module.exports = {
-  name: 'InteractionCreate',
+  name: Events.InteractionCreate,
   async execute(interaction) {
     try {
       if (interaction.isChatInputCommand()) {
@@ -70,7 +70,7 @@ module.exports = {
             var blacklistTest = await blacklistCheck(interaction.user.id);
             if (blacklistTest) {
               const blacklisted = new EmbedBuilder()
-                .setColor(config.discord.embeds.red)
+                .setColor(config.other.colors.red)
                 .setDescription('You are blacklisted')
                 .setFooter({
                   text: `by @kathund | ${config.discord.supportInvite} for support`,
@@ -84,7 +84,7 @@ module.exports = {
             errorMessage(`Error ID: ${errorIdBlacklistCheck}`);
             console.log(error);
             const errorEmbed = new EmbedBuilder()
-              .setColor(config.discord.embeds.red)
+              .setColor(config.other.colors.red)
               .setTitle('An error occurred')
               .setDescription(
                 `Use </report-bug:${
@@ -111,7 +111,7 @@ module.exports = {
           errorMessage(`Error ID: ${errorIdCheck}`);
           console.log(error);
           const errorEmbed = new EmbedBuilder()
-            .setColor(config.discord.embeds.red)
+            .setColor(config.other.colors.red)
             .setTitle('An error occurred')
             .setDescription(
               `Use </report-bug:${
@@ -150,7 +150,7 @@ module.exports = {
           errorMessage(`Error Id - ${errorIdButtons}`);
           console.log(error);
           const errorEmbed = new EmbedBuilder()
-            .setColor(config.discord.embeds.red)
+            .setColor(config.other.colors.red)
             .setTitle('An error occurred')
             .setDescription(
               `Use </report-bug:${

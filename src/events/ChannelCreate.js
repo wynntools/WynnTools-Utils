@@ -9,18 +9,18 @@ module.exports = {
     try {
       if (channel.guild.id != config.discord.devServer) return;
       const channelCreatedLoggerEmbed = new EmbedBuilder()
-        .setDescription(`Channel Created - ${channel.name} (${channel.id}) - <#${channel.id}>}`)
-        .setColor(config.other.colors.red)
+        .setDescription(`**${channel.name}** Created <#${channel.id}>`)
+        .setColor(config.other.colors.green)
         .addFields(
+          {
+            name: 'Name',
+            value: `${channel.name} (${channel.id})`,
+            inline: false,
+          },
           {
             name: 'User',
             value: 'when i work out how to get this i will add it',
-            inline: true,
-          },
-          {
-            name: 'Channel',
-            value: `<t:${channel.createdTimestamp}:F> (<t:${channel.createdTimestamp}:R>) - ${channel.name} (${channel.id})`,
-            inline: true,
+            inline: false,
           }
         )
         .setTimestamp()

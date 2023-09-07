@@ -1,5 +1,5 @@
+const { generateID, toFixed } = require('../functions/helper.js');
 const { errorMessage } = require('../functions/logger.js');
-const { generateID } = require('../functions/helper.js');
 const { Events, EmbedBuilder } = require('discord.js');
 const config = require('../../config.json');
 
@@ -14,29 +14,42 @@ module.exports = {
         .addFields(
           {
             name: 'User',
-            value: `${member.user.globalName} - @${member.user.username} (${member.user.id}) - <@${member.user.id}>`,
-            inline: true,
+            value: `${
+              member.user.globalName
+                ? `${member.user.globalName} (${
+                    member.user.discriminator == '0'
+                      ? `@${member.user.username}`
+                      : `${member.user.username}#${member.user.discriminator}`
+                  })`
+                : member.user.discriminator == '0'
+                ? `@${member.user.username}`
+                : `${member.user.username}#${member.user.discriminator}`
+            } - ${member.user.id} <@${member.user.id}>`,
+            inline: false,
           },
           {
             name: 'Account Created',
-            value: `<t:${member.user.createdTimestamp}:F> (<t:${member.user.createdTimestamp}:R>)`,
-            inline: true,
+            value: `<t:${toFixed(member.user.createdTimestamp / 1000, 0)}:F> (<t:${toFixed(member.user.createdTimestamp / 1000,0)}:R>)`,
+            inline: false,
           },
           {
             name: 'Account Joined',
-            value: `<t:${member.joinedTimestamp}:F> (<t:${member.joinedTimestamp}:R>)`,
-            inline: true,
+            value: `<t:${toFixed(member.joinedTimestamp / 1000, 0)}:F> (<t:${toFixed(
+              member.joinedTimestamp / 1000,
+              0
+            )}:R>)`,
+            inline: false,
           },
           {
             name: 'Member Count',
             value: `${member.guild.memberCount}`,
-            inline: true,
+            inline: false,
           }
         )
         .setTimestamp()
         .setAuthor({
           name: `@${member.user.username}`,
-          iconURL: member.user.avatarURL,
+          iconURL: `https://cdn.discordapp.com/avatars/${member.user.id}/${member.user.avatar}.png?size=4096`,
         })
         .setFooter({
           text: `by @kathund | ${config.discord.supportInvite} for support`,

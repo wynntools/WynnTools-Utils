@@ -41,7 +41,7 @@ module.exports = {
         .setTimestamp()
         .setAuthor({
           name: `@${oldMember.user.username}`,
-          iconURL: oldMember.user.avatarURL,
+          iconURL: `https://cdn.discordapp.com/avatars/${oldMember.user.id}/${oldMember.user.avatar}.png?size=4096`,
         })
         .setFooter({
           text: `by @kathund | ${config.discord.supportInvite} for support`,

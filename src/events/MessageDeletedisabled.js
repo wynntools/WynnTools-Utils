@@ -4,8 +4,9 @@ const { Events, EmbedBuilder } = require('discord.js');
 const config = require('../../config.json');
 
 module.exports = {
-  name: Events.MessageDelete,
+  name: 'messageDelete',
   async execute(message) {
+    console.log(message);
     try {
       if (message.guild.id != config.discord.devServer) return;
       const messageDeleteLoggerEmbed = new EmbedBuilder()
@@ -26,7 +27,7 @@ module.exports = {
         .setTimestamp()
         .setAuthor({
           name: `@${message.author.username}`,
-          iconURL: message.author.avatarURL,
+          iconURL: `https://cdn.discordapp.com/avatars/${message.author.id}/${message.author.avatar}.png?size=4096`,
         })
         .setFooter({
           text: `by @kathund | ${config.discord.supportInvite} for support`,
