@@ -71,7 +71,7 @@ async function start() {
           continue;
         }
         client.on(event.name, (...args) => event.execute(...args));
-        scriptMessage(`Started ${event.name} event`);
+        scriptMessage(`Started ${event.name} Event`);
         await delay(300);
       } catch (error) {
         var startingEventErrorId = generateID(config.other.errorIdLength);

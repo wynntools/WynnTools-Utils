@@ -1,16 +1,17 @@
+const { errorMessage, eventMessage } = require('../functions/logger.js');
 const { generateID, toFixed } = require('../functions/helper.js');
-const { errorMessage } = require('../functions/logger.js');
 const { Events, EmbedBuilder } = require('discord.js');
 const config = require('../../config.json');
 
 module.exports = {
-  name: Events.GuildMemberRemove,
+  name: Events.GuildMemberAdd,
   async execute(member) {
     try {
       if (member.guild.id != config.discord.devServer) return;
-      const memberLeaveLoggerEmbed = new EmbedBuilder()
-        .setDescription(`Member Left (${member.user.id})`)
-        .setColor(config.other.colors.red)
+      eventMessage(Events.GuildMemberAdd, member.user.id);
+      const memberJoinLoggerEmbed = new EmbedBuilder()
+        .setDescription(`Member Joined (${member.user.id}) - <@${member.user.id}>`)
+        .setColor(config.other.colors.green)
         .addFields(
           {
             name: 'User',
@@ -29,13 +30,8 @@ module.exports = {
           },
           {
             name: 'Account Created',
-            value: `<t:${toFixed(member.user.createdTimestamp / 1000, 0)}:F> (<t:${toFixed(member.user.createdTimestamp / 1000,0)}:R>)`,
-            inline: false,
-          },
-          {
-            name: 'Account Joined',
-            value: `<t:${toFixed(member.joinedTimestamp / 1000, 0)}:F> (<t:${toFixed(
-              member.joinedTimestamp / 1000,
+            value: `<t:${toFixed(member.user.createdTimestamp / 1000, 0)}:F> (<t:${toFixed(
+              member.user.createdTimestamp / 1000,
               0
             )}:R>)`,
             inline: false,
@@ -43,12 +39,12 @@ module.exports = {
           {
             name: 'Member Count',
             value: `${member.guild.memberCount}`,
-            inline: false,
+            inline: true,
           }
         )
         .setTimestamp()
         .setAuthor({
-          name: `@${member.user.username}`,
+          name: `@${member.user.username} Joined`,
           iconURL: `https://cdn.discordapp.com/avatars/${member.user.id}/${member.user.avatar}.png?size=4096`,
         })
         .setFooter({
@@ -58,8 +54,8 @@ module.exports = {
 
       var loggerChannel = member.guild.channels.cache.get(config.discord.channels.logger);
       await loggerChannel.send({
-        content: `User Left - <@${member.user.id}>`,
-        embeds: [memberLeaveLoggerEmbed],
+        content: `User Joined - ${member.user.id}`,
+        embeds: [memberJoinLoggerEmbed],
       });
     } catch (error) {
       var errorId = generateID(config.other.errorIdLength);
