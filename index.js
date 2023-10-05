@@ -8,7 +8,14 @@ const path = require('path');
 const fs = require('fs');
 
 async function start() {
-  const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
+  const client = new Client({
+    intents: [
+      GatewayIntentBits.MessageContent,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.GuildMembers,
+      GatewayIntentBits.Guilds,
+    ],
+  });
   client.commands = new Collection();
   const foldersPath = path.join(__dirname, 'src/commands');
   const commandFolders = fs.readdirSync(foldersPath);

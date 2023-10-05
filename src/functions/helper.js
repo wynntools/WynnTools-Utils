@@ -128,6 +128,28 @@ function convertChannelType(type) {
   }
 }
 
+function isBlacklisted(userID, ticketBlacklist) {
+  for (const user of ticketBlacklist) {
+    if (user.user === userID) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function removeFromArray(array, id) {
+  try {
+    const index = array.findIndex((obj) => obj.user === id);
+    if (index > -1) {
+      array.splice(index, 1);
+      return array;
+    }
+  } catch (error) {
+    console.log(error);
+    return error;
+  }
+}
+
 module.exports = {
   generateID,
   getCurrentTime,
@@ -136,4 +158,6 @@ module.exports = {
   toFixed,
   cleanMessage,
   convertChannelType,
+  isBlacklisted,
+  removeFromArray,
 };

@@ -1,0 +1,8 @@
+{
+  "blacklist": [
+    { "user": "1234567891", "reason": "Spamming", "blacklistedAt": "1694675051" },
+    { "user": "1234567892", "reason": "Spamming", "blacklistedAt": "1694675052" },
+    { "user": "1234567893", "reason": "Spamming", "blacklistedAt": "1694675053" },
+    { "user": "1234567894", "reason": "Spamming", "blacklistedAt": "1694675054" }
+  ]
+}

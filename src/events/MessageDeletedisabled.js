@@ -1,6 +1,6 @@
 const { errorMessage } = require('../functions/logger.js');
 const { generateID } = require('../functions/helper.js');
-const { Events, EmbedBuilder } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const config = require('../../config.json');
 
 module.exports = {
