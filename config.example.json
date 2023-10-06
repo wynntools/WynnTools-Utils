@@ -20,6 +20,7 @@
     "emojis": { "yes": "✅", "no": "❌" },
     "logo": "https://i.imgur.com/uUuZx2E.png",
     "timezone": null,
+    "ticketIdLength": 15,
     "errorIdLength": 15,
     "cacheTimeout": 180,
     "devMode": false
