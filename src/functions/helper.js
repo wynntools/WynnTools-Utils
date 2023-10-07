@@ -128,7 +128,7 @@ function convertChannelType(type) {
   }
 }
 
-function isBlacklisted(userID, ticketBlacklist) {
+function isTicketBlacklisted(userID, ticketBlacklist) {
   for (const user of ticketBlacklist) {
     if (user.user === userID) {
       return true;
@@ -158,6 +158,6 @@ module.exports = {
   toFixed,
   cleanMessage,
   convertChannelType,
-  isBlacklisted,
+  isTicketBlacklisted,
   removeFromArray,
 };

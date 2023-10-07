@@ -8,8 +8,8 @@ const {
   ChannelType,
 } = require('discord.js');
 const {
+  isTicketBlacklisted,
   removeFromArray,
-  isBlacklisted,
   cleanMessage,
   generateID,
   toFixed,
@@ -40,8 +40,6 @@ module.exports = {
         .setDescription('Close a ticket')
         .addStringOption((option) => option.setName('reason').setDescription('The reason for closing a ticket'))
     )
-    .addSubcommand((subcommand) => subcommand.setName('claim').setDescription('Claim a ticket'))
-    .addSubcommand((subcommand) => subcommand.setName('unclaim').setDescription('Unclaim a ticket'))
     .addSubcommand((subcommand) =>
       subcommand
         .setName('ban')
@@ -59,10 +57,9 @@ module.exports = {
   async execute(interaction) {
     try {
       var tickets = JSON.parse(fs.readFileSync('data/tickets.json'));
-      var ticketsKeys = Object.keys(tickets);
       var subCommand = await interaction.options.getSubcommand();
       var ticketBlacklist = tickets.blacklist;
-      if (isBlacklisted(interaction.user.id, ticketBlacklist)) {
+      if (isTicketBlacklisted(interaction.user.id, ticketBlacklist)) {
         throw new Error('You are blacklisted from tickets');
       }
       if (subCommand === 'open') {
@@ -144,7 +141,6 @@ module.exports = {
           channelName: `ticket-${interaction.user.username}-${ticketId}`,
           ticketId: ticketId,
           reason: reason,
-          claimed: false,
           createdAt: toFixed(new Date().getTime() / 1000, 0),
         });
         await writeAt('data/tickets.json', 'total', tickets.total + 1);
@@ -169,29 +165,21 @@ module.exports = {
           .setCustomId(`TICKET_CLOSE_${channel.id}_${interaction.user.id}_${ticketId}`)
           .setStyle(ButtonStyle.Danger);
 
-        const ticketClaim = new ButtonBuilder()
-          .setLabel('Claim Ticket')
-          .setCustomId(`TICKET_CLAIM_${channel.id}_${interaction.user.id}_${ticketId}`)
-          .setStyle(ButtonStyle.Primary);
-
-        const ticketBan = new ButtonBuilder()
-          .setLabel('Ban User')
-          .setCustomId(`TICKET_BAN_${channel.id}_${interaction.user.id}_${ticketId}`)
-          .setStyle(ButtonStyle.Danger);
-
         const ticketCloseAndBan = new ButtonBuilder()
           .setLabel('Close Ticket and Ban User')
-          .setCustomId(`TICKET_CLOSE_BAN_${channel.id}_${interaction.user.id}_${ticketId}`)
+          .setCustomId(`TICKET_BAN_CLOSE_${channel.id}_${interaction.user.id}_${ticketId}`)
           .setStyle(ButtonStyle.Danger);
 
-        const row = new ActionRowBuilder().addComponents(ticketCloseButton, ticketClaim, ticketBan, ticketCloseAndBan);
+        const row = new ActionRowBuilder().addComponents(ticketCloseButton, ticketCloseAndBan);
 
         await channel.send({ content: `<@${interaction.user.id}>`, embeds: [ticketEmbed], components: [row] });
         await channel.send({ content: `<@&${config.discord.roles.mod}>` });
-        var message = channel.lastMessage;
-        if (message.content === `<@&${config.discord.roles.mod}>` && message.author.id === interaction.client.user.id) {
-          await message.delete();
-        }
+        var ticketChannelMessages = await channel.messages.fetch();
+        ticketChannelMessages.forEach(async (message) => {
+          if (!message.author.id === interaction.client.user.id) return;
+          if (message.content === `<@&${config.discord.roles.mod}>`) return await message.delete();
+          if (message.content === `<@${interaction.user.id}>`) return await message.pin();
+        });
         const ticketOpenedEmbed = new EmbedBuilder()
           .setColor(config.other.colors.green)
           .setTitle('Ticket Opened')
@@ -237,7 +225,6 @@ module.exports = {
               reason: reason,
               timestamp: toFixed(new Date().getTime() / 1000, 0),
             },
-            claimed: ticket.claimed,
           },
           messages: changed,
         };
@@ -265,18 +252,13 @@ module.exports = {
               inline: true,
             },
             {
-              name: 'Ticket Claimed',
-              value: ticket.claimed ? `By ${ticket.claimed}` : '-',
-              inline: true,
-            },
-            {
               name: 'Ticket Opened',
               value: `<t:${ticket.createdAt}:R>`,
               inline: true,
             },
             {
               name: 'Ticket Opened By',
-              value: `${ticketId}`,
+              value: `<@${ticket.user}>`,
               inline: true,
             },
             {
@@ -307,11 +289,6 @@ module.exports = {
               inline: true,
             },
             {
-              name: 'Ticket Claimed',
-              value: ticket.claimed ? `By ${ticket.claimed}` : '-',
-              inline: true,
-            },
-            {
               name: 'Ticket Opened',
               value: `<t:${ticket.createdAt}:R>`,
               inline: true,
@@ -337,215 +314,6 @@ module.exports = {
         await loggingChannel.send({ embeds: [closedLoggingEmbed] });
         await interaction.client.users.send(ticket.user, { embeds: [userCloseEmbed] });
         await interaction.channel.delete();
-      } else if (subCommand === 'claim') {
-        let hasPerms = false;
-        if (interaction.member.roles.cache.has(config.discord.roles.dev)) hasPerms = true;
-        if (interaction.member.roles.cache.has(config.discord.roles.admin)) hasPerms = true;
-        if (interaction.member.roles.cache.has(config.discord.roles.mod)) hasPerms = true;
-        if (!hasPerms) throw new Error('You do not have permission to use this command');
-        if (!interaction.channel.name.includes('ticket-')) throw new Error('This is not a ticket channel');
-        const ticketId = interaction.channel.name.split('-')[2];
-        const ticket = ticketsKeys[ticketId];
-        if (!ticket) throw new Error('Ticket not found? Please report this!');
-        if (ticket.claimed) throw new Error(`Ticket already claimed please get <@${ticket.claimed}> to unclaim it`);
-        await writeAt('data/tickets.json', ticket.user, {
-          user: ticket.user,
-          channel: ticket.channel,
-          channelName: ticket.channelName,
-          reason: ticket.reason,
-          claimed: interaction.user.id,
-          createdAt: ticket.createdAt,
-        });
-        await interaction.channel.edit({
-          name: ticket.channelName,
-          type: ChannelType.GuildText,
-          permissionOverwrites: [
-            {
-              id: ticket.user,
-              allow: [
-                PermissionFlagsBits.ReadMessageHistory,
-                PermissionFlagsBits.UseExternalEmojis,
-                PermissionFlagsBits.SendMessages,
-                PermissionFlagsBits.ViewChannel,
-                PermissionFlagsBits.AttachFiles,
-                PermissionFlagsBits.AddReactions,
-                PermissionFlagsBits.EmbedLinks,
-              ],
-            },
-            {
-              id: interaction.client.user.id,
-              allow: [
-                PermissionFlagsBits.ReadMessageHistory,
-                PermissionFlagsBits.UseExternalEmojis,
-                PermissionFlagsBits.SendMessages,
-                PermissionFlagsBits.ViewChannel,
-                PermissionFlagsBits.AttachFiles,
-                PermissionFlagsBits.AddReactions,
-                PermissionFlagsBits.EmbedLinks,
-              ],
-            },
-            {
-              id: interaction.user.id,
-              allow: [
-                PermissionFlagsBits.ReadMessageHistory,
-                PermissionFlagsBits.UseExternalEmojis,
-                PermissionFlagsBits.SendMessages,
-                PermissionFlagsBits.ViewChannel,
-                PermissionFlagsBits.AttachFiles,
-                PermissionFlagsBits.AddReactions,
-                PermissionFlagsBits.EmbedLinks,
-              ],
-            },
-            {
-              id: interaction.guild.roles.everyone,
-              deny: [
-                PermissionFlagsBits.ReadMessageHistory,
-                PermissionFlagsBits.UseExternalEmojis,
-                PermissionFlagsBits.SendMessages,
-                PermissionFlagsBits.ViewChannel,
-                PermissionFlagsBits.AttachFiles,
-                PermissionFlagsBits.AddReactions,
-                PermissionFlagsBits.EmbedLinks,
-              ],
-            },
-            {
-              id: config.discord.roles.dev,
-              deny: [
-                PermissionFlagsBits.ReadMessageHistory,
-                PermissionFlagsBits.UseExternalEmojis,
-                PermissionFlagsBits.SendMessages,
-                PermissionFlagsBits.ViewChannel,
-                PermissionFlagsBits.AttachFiles,
-                PermissionFlagsBits.AddReactions,
-                PermissionFlagsBits.EmbedLinks,
-              ],
-            },
-            {
-              id: config.discord.roles.admin,
-              deny: [
-                PermissionFlagsBits.ReadMessageHistory,
-                PermissionFlagsBits.UseExternalEmojis,
-                PermissionFlagsBits.SendMessages,
-                PermissionFlagsBits.ViewChannel,
-                PermissionFlagsBits.AttachFiles,
-                PermissionFlagsBits.AddReactions,
-                PermissionFlagsBits.EmbedLinks,
-              ],
-            },
-            {
-              id: config.discord.roles.mod,
-              deny: [
-                PermissionFlagsBits.ReadMessageHistory,
-                PermissionFlagsBits.UseExternalEmojis,
-                PermissionFlagsBits.SendMessages,
-                PermissionFlagsBits.ViewChannel,
-                PermissionFlagsBits.AttachFiles,
-                PermissionFlagsBits.AddReactions,
-                PermissionFlagsBits.EmbedLinks,
-              ],
-            },
-          ],
-        });
-        await interaction.reply({ content: 'Ticket Claimed', ephemeral: true });
-      } else if (subCommand === 'unclaim') {
-        let hasPerms = false;
-        if (interaction.member.roles.cache.has(config.discord.roles.dev)) hasPerms = true;
-        if (interaction.member.roles.cache.has(config.discord.roles.admin)) hasPerms = true;
-        if (interaction.member.roles.cache.has(config.discord.roles.mod)) hasPerms = true;
-        if (!hasPerms) throw new Error('You do not have permission to use this command');
-        if (!interaction.channel.name.includes('ticket-')) throw new Error('This is not a ticket channel');
-        const ticketId = interaction.channel.name.split('-')[2];
-        const ticket = ticketsKeys[ticketId];
-        if (!ticket) throw new Error('Ticket not found? Please report this!');
-        if (ticket.claimed === null) throw new Error("This ticket isn't claimed");
-        if (ticket.claimed != interaction.user.id) throw new Error("You haven't claimed this ticket");
-        await writeAt('data/tickets.json', ticket.user, {
-          user: ticket.user,
-          channel: ticket.channel,
-          channelName: ticket.channelName,
-          reason: ticket.reason,
-          claimed: null,
-          createdAt: ticket.createdAt,
-        });
-        await interaction.channel.edit({
-          name: ticket.channelName,
-          type: ChannelType.GuildText,
-          permissionOverwrites: [
-            {
-              id: ticket.user,
-              allow: [
-                PermissionFlagsBits.ReadMessageHistory,
-                PermissionFlagsBits.UseExternalEmojis,
-                PermissionFlagsBits.SendMessages,
-                PermissionFlagsBits.ViewChannel,
-                PermissionFlagsBits.AttachFiles,
-                PermissionFlagsBits.AddReactions,
-                PermissionFlagsBits.EmbedLinks,
-              ],
-            },
-            {
-              id: interaction.client.user.id,
-              allow: [
-                PermissionFlagsBits.ReadMessageHistory,
-                PermissionFlagsBits.UseExternalEmojis,
-                PermissionFlagsBits.SendMessages,
-                PermissionFlagsBits.ViewChannel,
-                PermissionFlagsBits.AttachFiles,
-                PermissionFlagsBits.AddReactions,
-                PermissionFlagsBits.EmbedLinks,
-              ],
-            },
-            {
-              id: interaction.guild.roles.everyone,
-              deny: [
-                PermissionFlagsBits.ReadMessageHistory,
-                PermissionFlagsBits.UseExternalEmojis,
-                PermissionFlagsBits.SendMessages,
-                PermissionFlagsBits.ViewChannel,
-                PermissionFlagsBits.AttachFiles,
-                PermissionFlagsBits.AddReactions,
-                PermissionFlagsBits.EmbedLinks,
-              ],
-            },
-            {
-              id: config.discord.roles.dev,
-              allow: [
-                PermissionFlagsBits.ReadMessageHistory,
-                PermissionFlagsBits.UseExternalEmojis,
-                PermissionFlagsBits.SendMessages,
-                PermissionFlagsBits.ViewChannel,
-                PermissionFlagsBits.AttachFiles,
-                PermissionFlagsBits.AddReactions,
-                PermissionFlagsBits.EmbedLinks,
-              ],
-            },
-            {
-              id: config.discord.roles.admin,
-              allow: [
-                PermissionFlagsBits.ReadMessageHistory,
-                PermissionFlagsBits.UseExternalEmojis,
-                PermissionFlagsBits.SendMessages,
-                PermissionFlagsBits.ViewChannel,
-                PermissionFlagsBits.AttachFiles,
-                PermissionFlagsBits.AddReactions,
-                PermissionFlagsBits.EmbedLinks,
-              ],
-            },
-            {
-              id: config.discord.roles.mod,
-              allow: [
-                PermissionFlagsBits.ReadMessageHistory,
-                PermissionFlagsBits.UseExternalEmojis,
-                PermissionFlagsBits.SendMessages,
-                PermissionFlagsBits.ViewChannel,
-                PermissionFlagsBits.AttachFiles,
-                PermissionFlagsBits.AddReactions,
-                PermissionFlagsBits.EmbedLinks,
-              ],
-            },
-          ],
-        });
-        await interaction.reply({ content: 'Ticket Unclaimed', ephemeral: true });
       } else if (subCommand === 'ban') {
         let hasPerms = false;
         if (interaction.member.roles.cache.has(config.discord.roles.dev)) hasPerms = true;
@@ -555,7 +323,7 @@ module.exports = {
         const user = await interaction.options.getUser('user');
         const reason = (await interaction.options.getString('reason')) || 'No reason provided';
         if (!user) throw new Error('User not found?');
-        if (isBlacklisted(user.id, ticketBlacklist)) {
+        if (isTicketBlacklisted(user.id, ticketBlacklist)) {
           throw new Error('User already blacklisted from tickets');
         }
         ticketBlacklist.push({
@@ -584,12 +352,10 @@ module.exports = {
         if (!hasPerms) throw new Error('You do not have permission to use this command');
         const user = await interaction.options.getUser('user');
         if (!user) throw new Error('User not found?');
-        if (!isBlacklisted(user.id, ticketBlacklist)) {
+        if (!isTicketBlacklisted(user.id, ticketBlacklist)) {
           throw new Error("User isn't ticket blacklisted");
         }
-
-        await writeAt('data/tickets.json', 'blacklist', await removeFromArray(ticketBlacklist, '1234567893'));
-
+        await writeAt('data/tickets.json', 'blacklist', await removeFromArray(ticketBlacklist, user.id));
         const userUnbanEmbed = new EmbedBuilder()
           .setColor(config.other.colors.red)
           .setTitle('Ticket Blacklist')
@@ -599,7 +365,6 @@ module.exports = {
             text: `by @kathund | ${config.discord.supportInvite} for support`,
             iconURL: config.other.logo,
           });
-
         await interaction.reply({ embeds: [userUnbanEmbed] });
       }
     } catch (error) {
