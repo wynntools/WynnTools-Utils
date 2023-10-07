@@ -276,7 +276,7 @@ module.exports = {
             await interaction.client.users.send(ticket.user, { embeds: [userCloseEmbed] });
             await interaction.channel.delete();
           } else if (interaction.customId.includes('TICKET_BAN_CLOSE_')) {
-            console.log('blacklisting')
+            console.log('blacklisting');
             const channelId = interaction.customId.split('_')[3];
             const userId = interaction.customId.split('_')[4];
             let hasPerms = false;
