@@ -7,7 +7,7 @@ const {
   toFixed,
 } = require('../functions/helper.js');
 const { ActionRowBuilder, ButtonBuilder, EmbedBuilder, ButtonStyle, Events } = require('discord.js');
-const { commandMessage, errorMessage } = require('../functions/logger.js');
+const { eventMessage, errorMessage } = require('../functions/logger.js');
 const config = require('../../config.json');
 const fs = require('fs');
 
@@ -20,15 +20,29 @@ module.exports = {
         if (!command) return;
         try {
           try {
-            if (interaction.user.discriminator == '0') {
-              commandMessage(
-                `${interaction.user.username} (${interaction.user.id}) ran command ${interaction.commandName}`
-              );
-            } else {
-              commandMessage(
-                `${interaction.user.username}#${interaction.user.discriminator} (${interaction.user.id}) ran command ${interaction.commandName}`
-              );
+            var commandString = await interaction.commandName;
+            if (interaction.options) {
+              if (interaction.options._group) {
+                commandString += ` ${await interaction.options.getSubcommandGroup()}`;
+              }
+              if (interaction.options._subcommand) {
+                commandString += ` ${await interaction.options.getSubcommand()}`;
+              }
+              for (const option of interaction.options._hoistedOptions) {
+                if (option.value && option.name) {
+                  commandString += ` ${option.name}: ${option.value}`;
+                }
+              }
             }
+            eventMessage(
+              `Interaction Event trigged by ${
+                interaction.user.discriminator == '0'
+                  ? interaction.user.username
+                  : `${interaction.user.username}#${interaction.user.discriminator}`
+              } (${interaction.user.id}) ran command ${commandString} in ${interaction.guild.id} in ${
+                interaction.channel.id
+              }`
+            );
           } catch (error) {
             var errorIdLogger = generateID(config.other.errorIdLength);
             errorMessage(`Error ID: ${errorIdLogger}`);
@@ -142,6 +156,15 @@ module.exports = {
         }
       } else if (interaction.isButton()) {
         try {
+          eventMessage(
+            `Interaction Event trigged by ${
+              interaction.user.discriminator == '0'
+                ? interaction.user.username
+                : `${interaction.user.username}#${interaction.user.discriminator}`
+            } (${interaction.user.id}) clicked button ${interaction.customId} in ${interaction.guild.id} in ${
+              interaction.channel.id
+            } at ${interaction.message.id}`
+          );
           var tickets = JSON.parse(fs.readFileSync('data/tickets.json'));
           if (interaction.customId.includes('TICKET_CLOSE_')) {
             const channelId = interaction.customId.split('_')[2];
