@@ -1,19 +1,26 @@
 {
   "discord": {
-    "token": "DISCORD_TOKEN",
+    "token": "DISCORD_BOT_TOKEN",
     "clientId": "DISCORD_BOT_CLIENT_ID",
-    "devServer": "DEV_SERVER_ID_FOR_TESTING",
+    "devServer": "DEV_SERVER_ID",
     "devId": "DEV_USER_ID",
     "channels": {
       "logger": "LOGGING_CHANNEL_ID",
       "support": "SUPPORT_CHANNEL_ID",
-      "noCommandTracking": ["NO_COMMAND_TRACKING_CHANNEL_ID"]
+      "noCommandTracking": ["NO_COMMAND_TRACKING_CHANNEL_ID"],
+      "ticketLogging": "TICKET_LOGGING_CHANNEL"
     },
-    "commands": { "report-bug": "REPORT_BUG_COMMAND_ID" },
-    "roles": { "dev": "DEV_ROLE_ID" },
+    "commands": { "report-bug": "REPORT_BUG_COMMAND" },
+    "roles": { "dev": "DEV_ROLE_ID", "admin": "ADMIN_ROLE_ID", "mod": "MOD_ROLE_ID" },
     "supportInvite": "SUPPORT_SERVER_INVITE",
     "botInvite": "BOT_INVITE_URL",
     "buttonTimeout": 30
+  },
+  "api": {
+    "transcripts": {
+      "url": "YOUR_LOGGING_API_URL",
+      "key": "YOUR_API_KEY"
+    }
   },
   "other": {
     "colors": { "red": "#EF3333", "orange": "#DC602E", "green": "#33EF33" },
