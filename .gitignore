@@ -4,3 +4,4 @@ package-lock.json
 a.js
 b.js
 .VSCodeCounter/
+logs/
