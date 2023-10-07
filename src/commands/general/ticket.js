@@ -21,7 +21,7 @@ const fs = require('fs');
 const fetch = (...args) =>
   import('node-fetch')
     .then(({ default: fetch }) => fetch(...args))
-    .catch((error) => console.log(error));
+    .catch((error) => errorMessage(error));
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -370,7 +370,7 @@ module.exports = {
     } catch (error) {
       var errorId = generateID(config.other.errorIdLength);
       errorMessage(`Error Id - ${errorId}`);
-      console.log(error);
+      errorMessage(error);
       const errorEmbed = new EmbedBuilder()
         .setColor(config.other.colors.red)
         .setTitle('An error occurred')

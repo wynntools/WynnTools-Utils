@@ -42,7 +42,7 @@ module.exports = {
     } catch (error) {
       var errorId = generateID(config.other.errorIdLength);
       errorMessage(`Error ID: ${errorId}`);
-      console.log(error);
+      errorMessage(error);
     }
   },
 };

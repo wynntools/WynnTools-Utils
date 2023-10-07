@@ -6,7 +6,6 @@ const config = require('../../config.json');
 module.exports = {
   name: Events.GuildBanAdd,
   async execute(ban) {
-    console.log(ban);
     try {
       if (ban.guild.id != config.discord.devServer) return;
       const guildBanAddLoggerEmbed = new EmbedBuilder()
@@ -59,7 +58,7 @@ module.exports = {
     } catch (error) {
       var errorId = generateID(config.other.errorIdLength);
       errorMessage(`Error ID: ${errorId}`);
-      console.log(error);
+      errorMessage(error);
     }
   },
 };

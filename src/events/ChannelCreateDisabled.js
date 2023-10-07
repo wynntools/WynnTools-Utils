@@ -14,22 +14,18 @@ module.exports = {
         limit: 1,
       });
       var log = logs.entries.first();
-      console.log('---------------- Logs Splitter ----------------');
       var permissions = log.changes.find((item) => item.key === 'permission_overwrites').new;
-      console.log(permissions);
-      console.log('---------------- Logs Splitter ----------------');
       var permissionsString = '';
       permissions.forEach((permission) => {
         permissionsString += `${permission.type} - ${permission.id} - ${permission.allow} - ${permission.deny}\n`;
       });
+      // eslint-disable-next-line
       console.log(permissionsString);
-      console.log('---------------- Logs Splitter ----------------');
-      // for every role in the permissions array get the role and then get the permissions for that role
       permissions.forEach(async (permission) => {
         var role = await channel.guild.roles.cache.get(permission.id);
         var perms = await channel.permissionsFor(role).toArray();
+        // eslint-disable-next-line
         console.log(`Role: ${role.name} (${role.id}) - Permissions: ${perms.join(', ')}`);
-        console.log('---------------- Logs Splitter ----------------');
       });
       const channelCreatedLoggerEmbed = new EmbedBuilder()
         .setDescription(`**${channel.name}** Created <#${channel.id}>`)
@@ -74,7 +70,7 @@ module.exports = {
     } catch (error) {
       var errorId = generateID(config.other.errorIdLength);
       errorMessage(`Error ID: ${errorId}`);
-      console.log(error);
+      errorMessage(error);
     }
   },
 };

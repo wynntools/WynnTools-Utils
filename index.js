@@ -56,7 +56,7 @@ async function start() {
       } catch (error) {
         var errorId = generateID(config.other.errorIdLength);
         errorMessage(`Error ID: ${errorId}`);
-        console.log(error);
+        errorMessage(error);
       }
     }
     scriptMessage(`Started ${scriptFiles.length - skipped} script(s) and skipped ${skipped} script(s)`);
@@ -83,14 +83,14 @@ async function start() {
       } catch (error) {
         var startingEventErrorId = generateID(config.other.errorIdLength);
         errorMessage(`Error ID: ${startingEventErrorId}`);
-        console.log(error);
+        errorMessage(error);
       }
     }
     scriptMessage(`Started ${eventFiles.length - skippedEvents} event(s) and skipped ${skippedEvents} events(s)`);
   } catch (error) {
     var errorId = generateID(config.other.errorIdLength);
     errorMessage(`Error ID: ${errorId}`);
-    console.log(error);
+    errorMessage(error);
   }
 
   client.login(config.discord.token);

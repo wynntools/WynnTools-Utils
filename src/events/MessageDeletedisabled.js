@@ -6,7 +6,6 @@ const config = require('../../config.json');
 module.exports = {
   name: 'messageDelete',
   async execute(message) {
-    console.log(message);
     try {
       if (message.guild.id != config.discord.devServer) return;
       const messageDeleteLoggerEmbed = new EmbedBuilder()
@@ -42,7 +41,7 @@ module.exports = {
     } catch (error) {
       var errorId = generateID(config.other.errorIdLength);
       errorMessage(`Error ID: ${errorId}`);
-      console.log(error);
+      errorMessage(error);
     }
   },
 };

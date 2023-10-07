@@ -32,7 +32,7 @@ module.exports = {
           } catch (error) {
             var errorIdLogger = generateID(config.other.errorIdLength);
             errorMessage(`Error ID: ${errorIdLogger}`);
-            console.log(error);
+            errorMessage(error);
           }
           if (
             config.other.devMode &&
@@ -71,7 +71,7 @@ module.exports = {
           } catch (error) {
             var errorIdLogUserData = generateID(config.other.errorIdLength);
             errorMessage(`Error ID: ${errorIdLogUserData}`);
-            console.log(error);
+            errorMessage(error);
           }
           try {
             var blacklistTest = await blacklistCheck(interaction.user.id);
@@ -89,7 +89,7 @@ module.exports = {
           } catch (error) {
             var errorIdBlacklistCheck = generateID(config.other.errorIdLength);
             errorMessage(`Error ID: ${errorIdBlacklistCheck}`);
-            console.log(error);
+            errorMessage(error);
             const errorEmbed = new EmbedBuilder()
               .setColor(config.other.colors.red)
               .setTitle('An error occurred')
@@ -116,7 +116,7 @@ module.exports = {
         } catch (error) {
           var errorIdCheck = generateID(config.other.errorIdLength);
           errorMessage(`Error ID: ${errorIdCheck}`);
-          console.log(error);
+          errorMessage(error);
           const errorEmbed = new EmbedBuilder()
             .setColor(config.other.colors.red)
             .setTitle('An error occurred')
@@ -142,7 +142,6 @@ module.exports = {
         }
       } else if (interaction.isButton()) {
         try {
-          console.log(interaction.customId);
           var tickets = JSON.parse(fs.readFileSync('data/tickets.json'));
           if (interaction.customId.includes('TICKET_CLOSE_')) {
             const channelId = interaction.customId.split('_')[2];
@@ -276,7 +275,6 @@ module.exports = {
             await interaction.client.users.send(ticket.user, { embeds: [userCloseEmbed] });
             await interaction.channel.delete();
           } else if (interaction.customId.includes('TICKET_BAN_CLOSE_')) {
-            console.log('blacklisting');
             const channelId = interaction.customId.split('_')[3];
             const userId = interaction.customId.split('_')[4];
             let hasPerms = false;
@@ -287,7 +285,6 @@ module.exports = {
             if (!hasPerms) throw new Error('You do not have permission to use this command');
             const reason = 'No reason provided';
             if (!interaction.channel.name.includes('ticket-')) throw new Error('This is not a ticket channel');
-            console.log('blacklisting');
             const ticketBlacklist = tickets.blacklist;
             if (isTicketBlacklisted(userId, ticketBlacklist)) {
               throw new Error('User already blacklisted from tickets');
@@ -435,7 +432,7 @@ module.exports = {
           }
         } catch (error) {
           if (String(error).includes('NO_ERROR_ID_')) {
-            console.log(error);
+            errorMessage(error);
             const errorEmbed = new EmbedBuilder()
               .setColor(config.other.colors.red.hex)
               .setTitle('An error occurred')
@@ -458,7 +455,7 @@ module.exports = {
           } else {
             var errorIdButtons = generateID(config.other.errorIdLength);
             errorMessage(`Error Id - ${errorIdButtons}`);
-            console.log(error);
+            errorMessage(error);
             const errorEmbed = new EmbedBuilder()
               .setColor(config.other.colors.red.hex)
               .setTitle('An error occurred')
@@ -487,7 +484,7 @@ module.exports = {
     } catch (error) {
       var errorId = generateID(config.other.errorIdLength);
       errorMessage(`Error Id - ${errorId}`);
-      console.log(error);
+      errorMessage(error);
     }
   },
 };
