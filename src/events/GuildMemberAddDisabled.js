@@ -11,7 +11,7 @@ module.exports = {
       eventMessage(Events.GuildMemberAdd, member.user.id);
       const memberJoinLoggerEmbed = new EmbedBuilder()
         .setDescription(`Member Joined (${member.user.id}) - <@${member.user.id}>`)
-        .setColor(config.other.colors.green)
+        .setColor(config.other.colors.green.hex)
         .addFields(
           {
             name: 'User',

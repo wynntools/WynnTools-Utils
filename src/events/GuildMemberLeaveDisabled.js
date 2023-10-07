@@ -11,7 +11,7 @@ module.exports = {
       eventMessage(Events.GuildMemberRemove, member.user.id);
       const memberLeaveLoggerEmbed = new EmbedBuilder()
         .setDescription(`Member Left (${member.user.id})`)
-        .setColor(config.other.colors.red)
+        .setColor(config.other.colors.red.hex)
         .addFields(
           {
             name: 'User',

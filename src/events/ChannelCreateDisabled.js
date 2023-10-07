@@ -29,7 +29,7 @@ module.exports = {
       });
       const channelCreatedLoggerEmbed = new EmbedBuilder()
         .setDescription(`**${channel.name}** Created <#${channel.id}>`)
-        .setColor(config.other.colors.green)
+        .setColor(config.other.colors.green.hex)
         .addFields(
           {
             name: 'Name',

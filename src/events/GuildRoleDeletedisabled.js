@@ -10,7 +10,7 @@ module.exports = {
       if (role.guild.id != config.discord.devServer) return;
       const guildRoleDeleteEmbed = new EmbedBuilder()
         .setDescription(`Role Deleted - ${role.name} (${role.id})`)
-        .setColor(config.other.colors.red)
+        .setColor(config.other.colors.red.hex)
         .addFields(
           {
             name: 'User',

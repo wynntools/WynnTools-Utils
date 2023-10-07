@@ -146,7 +146,7 @@ module.exports = {
         await writeAt('data/tickets.json', 'total', tickets.total + 1);
 
         const ticketEmbed = new EmbedBuilder()
-          .setColor(config.other.colors.green)
+          .setColor(config.other.colors.green.hex)
           .setTitle('Ticket Opened')
           .setDescription(`Ticket opened by ${interaction.user.tag} (${interaction.user.id})`)
           .addFields({
@@ -181,7 +181,7 @@ module.exports = {
           if (message.content === `<@${interaction.user.id}>`) return await message.pin();
         });
         const ticketOpenedEmbed = new EmbedBuilder()
-          .setColor(config.other.colors.green)
+          .setColor(config.other.colors.green.hex)
           .setTitle('Ticket Opened')
           .setDescription(`Your ticket has been opened in <#${channel.id}>`);
         await interaction.editReply({ embeds: [ticketOpenedEmbed] });
@@ -237,7 +237,7 @@ module.exports = {
         if (!ticket) throw new Error('Ticket not found? Please report this!');
         await interaction.reply({ content: 'Closing ticket...', ephemeral: true });
         var userCloseEmbed = new EmbedBuilder()
-          .setColor(config.other.colors.green)
+          .setColor(config.other.colors.green.hex)
           .setTitle('Ticket Closed')
           .setDescription(`Your ticket has been closed by <@${interaction.user.id}>`)
           .addFields(
@@ -274,7 +274,7 @@ module.exports = {
           });
 
         var closedLoggingEmbed = new EmbedBuilder()
-          .setColor(config.other.colors.green)
+          .setColor(config.other.colors.green.hex)
           .setTitle('Ticket Closed')
           .setDescription(`Ticket closed by <@${interaction.user.id}>`)
           .addFields(
@@ -334,7 +334,7 @@ module.exports = {
         await writeAt('data/tickets.json', 'blacklist', ticketBlacklist);
 
         const userBanEmbed = new EmbedBuilder()
-          .setColor(config.other.colors.red)
+          .setColor(config.other.colors.red.hex)
           .setTitle('Ticket Blacklisted')
           .setDescription(`Successfully blacklisted <@${user.id}> from tickets`)
           .setTimestamp()
@@ -357,7 +357,7 @@ module.exports = {
         }
         await writeAt('data/tickets.json', 'blacklist', await removeFromArray(ticketBlacklist, user.id));
         const userUnbanEmbed = new EmbedBuilder()
-          .setColor(config.other.colors.red)
+          .setColor(config.other.colors.red.hex)
           .setTitle('Ticket Blacklist')
           .setDescription(`Successfully removed <@${user.id}> from tickets blacklist`)
           .setTimestamp()
@@ -372,7 +372,7 @@ module.exports = {
       errorMessage(`Error Id - ${errorId}`);
       errorMessage(error);
       const errorEmbed = new EmbedBuilder()
-        .setColor(config.other.colors.red)
+        .setColor(config.other.colors.red.hex)
         .setTitle('An error occurred')
         .setDescription(
           `Use </report-bug:${

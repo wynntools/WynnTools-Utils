@@ -10,7 +10,7 @@ module.exports = {
       if (oldRole.guild.id != config.discord.devServer) return;
       const roleUpdateLoggerEmbed = new EmbedBuilder()
         .setDescription(`Channel Updated - ${oldRole.name} (${oldRole.id}) - <@&${oldRole.id}>`)
-        .setColor(config.other.colors.red)
+        .setColor(config.other.colors.red.hex)
         .addFields(
           {
             name: 'User',

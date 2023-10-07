@@ -10,7 +10,7 @@ module.exports = {
       if (oldMember.guild.id != config.discord.devServer) return;
       const memberUpdateLoggerEmbed = new EmbedBuilder()
         .setDescription(`Member Updated - <@${oldMember.user.id}> (${oldMember.user.id})`)
-        .setColor(config.other.colors.red)
+        .setColor(config.other.colors.red.hex)
         .addFields(
           {
             name: 'User',

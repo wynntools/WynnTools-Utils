@@ -21,7 +21,7 @@ module.exports = {
       const row = new ActionRowBuilder().addComponents(support, invite, source);
       var embed = new EmbedBuilder()
         .setTitle(`WynnTools Utils Stats`)
-        .setColor(config.other.colors.green)
+        .setColor(config.other.colors.green.hex)
         .setTimestamp()
         .setDescription(
           'WynnTools - A bot that does stuff with the wynncraft api - The Only bot that uses images **that i have seen**'
@@ -41,7 +41,7 @@ module.exports = {
       errorMessage(`Error Id - ${errorId}`);
       errorMessage(error);
       const errorEmbed = new EmbedBuilder()
-        .setColor(config.other.colors.red)
+        .setColor(config.other.colors.red.hex)
         .setTitle('An error occurred')
         .setDescription(
           `Use </report-bug:${

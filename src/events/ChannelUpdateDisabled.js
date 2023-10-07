@@ -10,7 +10,7 @@ module.exports = {
       if (oldChannel.guild.id != config.discord.devServer) return;
       const channelUpdateLoggerEmbed = new EmbedBuilder()
         .setDescription(`**${newChannel.name}** Updated <#${newChannel.id}>`)
-        .setColor(config.other.colors.orange)
+        .setColor(config.other.colors.orange.hex)
         .addFields(
           {
             name: 'Old Channel',

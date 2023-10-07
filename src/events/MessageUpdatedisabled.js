@@ -12,7 +12,7 @@ module.exports = {
         .setDescription(
           `Message Edited - <#${oldMessage.channel.id}> (${oldMessage.channel.id}) @ [Link](${oldMessage.url})`
         )
-        .setColor(config.other.colors.orange)
+        .setColor(config.other.colors.orange.hex)
         .addFields(
           {
             name: 'User',

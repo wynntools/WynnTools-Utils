@@ -77,7 +77,7 @@ module.exports = {
             var blacklistTest = await blacklistCheck(interaction.user.id);
             if (blacklistTest) {
               const blacklisted = new EmbedBuilder()
-                .setColor(config.other.colors.red)
+                .setColor(config.other.colors.red.hex)
                 .setDescription('You are blacklisted')
                 .setFooter({
                   text: `by @kathund | ${config.discord.supportInvite} for support`,
@@ -91,7 +91,7 @@ module.exports = {
             errorMessage(`Error ID: ${errorIdBlacklistCheck}`);
             errorMessage(error);
             const errorEmbed = new EmbedBuilder()
-              .setColor(config.other.colors.red)
+              .setColor(config.other.colors.red.hex)
               .setTitle('An error occurred')
               .setDescription(
                 `Use </report-bug:${
@@ -118,7 +118,7 @@ module.exports = {
           errorMessage(`Error ID: ${errorIdCheck}`);
           errorMessage(error);
           const errorEmbed = new EmbedBuilder()
-            .setColor(config.other.colors.red)
+            .setColor(config.other.colors.red.hex)
             .setTitle('An error occurred')
             .setDescription(
               `Use </report-bug:${
@@ -197,7 +197,7 @@ module.exports = {
             if (!ticket) throw new Error('Ticket not found? Please report this!');
             await interaction.reply({ content: 'Closing ticket...', ephemeral: true });
             const userCloseEmbed = new EmbedBuilder()
-              .setColor(config.other.colors.green)
+              .setColor(config.other.colors.green.hex)
               .setTitle('Ticket Closed')
               .setDescription(`Your ticket has been closed by <@${interaction.user.id}>`)
               .addFields(
@@ -234,7 +234,7 @@ module.exports = {
               });
 
             const closedLoggingEmbed = new EmbedBuilder()
-              .setColor(config.other.colors.green)
+              .setColor(config.other.colors.green.hex)
               .setTitle('Ticket Closed')
               .setDescription(`Ticket closed by <@${interaction.user.id}>`)
               .addFields(
@@ -297,7 +297,7 @@ module.exports = {
             await writeAt('data/tickets.json', 'blacklist', ticketBlacklist);
 
             const userBanEmbed = new EmbedBuilder()
-              .setColor(config.other.colors.red)
+              .setColor(config.other.colors.red.hex)
               .setTitle('Ticket Blacklisted')
               .setDescription(`Successfully blacklisted <@${userId}> from tickets`)
               .setTimestamp()
@@ -352,7 +352,7 @@ module.exports = {
             if (res.status != 201) throw new Error('Error creating transcript');
             await interaction.followUp({ content: 'Closing ticket...', ephemeral: true });
             const userCloseEmbed = new EmbedBuilder()
-              .setColor(config.other.colors.green)
+              .setColor(config.other.colors.green.hex)
               .setTitle('Ticket Closed')
               .setDescription(`Your ticket has been closed by <@${interaction.user.id}>`)
               .addFields(
@@ -389,7 +389,7 @@ module.exports = {
               });
 
             const closedLoggingEmbed = new EmbedBuilder()
-              .setColor(config.other.colors.green)
+              .setColor(config.other.colors.green.hex)
               .setTitle('Ticket Closed')
               .setDescription(`Ticket closed by <@${interaction.user.id}>`)
               .addFields(
@@ -434,7 +434,7 @@ module.exports = {
           if (String(error).includes('NO_ERROR_ID_')) {
             errorMessage(error);
             const errorEmbed = new EmbedBuilder()
-              .setColor(config.other.colors.red.hex)
+              .setColor(config.other.colors.red.hex.hex)
               .setTitle('An error occurred')
               .setDescription(`Error Info - \`${cleanMessage(error)}\``)
               .setFooter({
@@ -457,7 +457,7 @@ module.exports = {
             errorMessage(`Error Id - ${errorIdButtons}`);
             errorMessage(error);
             const errorEmbed = new EmbedBuilder()
-              .setColor(config.other.colors.red.hex)
+              .setColor(config.other.colors.red.hex.hex)
               .setTitle('An error occurred')
               .setDescription(
                 `Use </report-bug:${

@@ -10,7 +10,7 @@ module.exports = {
       if (channel.guild.id != config.discord.devServer) return;
       const channelDeletedLoggerEmbed = new EmbedBuilder()
         .setDescription(`**${channel.name}** Deleted <#${channel.id}>`)
-        .setColor(config.other.colors.red)
+        .setColor(config.other.colors.red.hex)
         .addFields(
           {
             name: 'Name',

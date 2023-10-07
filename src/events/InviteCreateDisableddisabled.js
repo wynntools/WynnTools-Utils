@@ -10,7 +10,7 @@ module.exports = {
       if (invite.guild.id != config.discord.devServer) return;
       const inviteCreateLoggerEmbed = new EmbedBuilder()
         .setDescription(`Invite - discord.gg/${invite.code}`)
-        .setColor(config.other.colors.green)
+        .setColor(config.other.colors.green.hex)
         .addFields(
           {
             name: 'User',

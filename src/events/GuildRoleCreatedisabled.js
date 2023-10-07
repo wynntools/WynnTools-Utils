@@ -10,7 +10,7 @@ module.exports = {
       if (role.guild.id != config.discord.devServer) return;
       const guildRoleCreatedLoggerEmbed = new EmbedBuilder()
         .setDescription(`Role Created - ${role.name} (${role.id}) - <@&${role.id}>`)
-        .setColor(config.other.colors.green)
+        .setColor(config.other.colors.green.hex)
         .addFields(
           {
             name: 'User',

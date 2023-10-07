@@ -10,7 +10,7 @@ module.exports = {
       if (ban.guild.id != config.discord.devServer) return;
       const guildBanAddLoggerEmbed = new EmbedBuilder()
         .setDescription(`Member UnBanned - <@${ban.user.id}> (${ban.user.id})`)
-        .setColor(config.other.colors.green)
+        .setColor(config.other.colors.green.hex)
         .addFields(
           {
             name: 'User',
