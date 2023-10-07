@@ -52,6 +52,22 @@ module.exports = {
         .setName('unban')
         .setDescription('Unban a user from the ticket')
         .addUserOption((option) => option.setName('user').setDescription('The user to unban').setRequired(true))
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('add')
+        .setDescription('Add a user to a ticket')
+        .addUserOption((option) =>
+          option.setName('user').setDescription('The user you want to add to this ticket').setRequired(true)
+        )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('remove')
+        .setDescription('remove a user to a ticket')
+        .addUserOption((option) =>
+          option.setName('user').setDescription('The user you want to remove from this ticket').setRequired(true)
+        )
     ),
 
   async execute(interaction) {
@@ -366,6 +382,196 @@ module.exports = {
             iconURL: config.other.logo,
           });
         await interaction.reply({ embeds: [userUnbanEmbed] });
+      } else if (subCommand === 'add') {
+        let hasPerms = false;
+        if (interaction.member.roles.cache.has(config.discord.roles.dev)) hasPerms = true;
+        if (interaction.member.roles.cache.has(config.discord.roles.admin)) hasPerms = true;
+        if (interaction.member.roles.cache.has(config.discord.roles.mod)) hasPerms = true;
+        if (!hasPerms) throw new Error('You do not have permission to use this command');
+        const user = await interaction.options.getUser('user');
+        if (!user) throw new Error('User not found?');
+        if (!interaction.channel.name.includes('ticket-')) throw new Error('This is not a ticket channel');
+        const ticketId = interaction.channel.name.split('-')[2];
+        const ticket = tickets[ticketId];
+        const ticketUser = await interaction.guild.members.fetch(ticket.user);
+        await interaction.channel.edit({
+          name: ticket.channelName,
+          type: ChannelType.GuildText,
+          permissionOverwrites: [
+            {
+              id: ticketUser.id,
+              allow: [
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.UseExternalEmojis,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.AddReactions,
+                PermissionFlagsBits.EmbedLinks,
+              ],
+            },
+            {
+              id: user.id,
+              allow: [
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.UseExternalEmojis,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.AddReactions,
+                PermissionFlagsBits.EmbedLinks,
+              ],
+            },
+            {
+              id: config.discord.roles.dev,
+              allow: [
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.UseExternalEmojis,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.AddReactions,
+                PermissionFlagsBits.EmbedLinks,
+              ],
+            },
+            {
+              id: config.discord.roles.admin,
+              allow: [
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.UseExternalEmojis,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.AddReactions,
+                PermissionFlagsBits.EmbedLinks,
+              ],
+            },
+            {
+              id: config.discord.roles.mod,
+              allow: [
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.UseExternalEmojis,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.AddReactions,
+                PermissionFlagsBits.EmbedLinks,
+              ],
+            },
+            {
+              id: interaction.guild.roles.everyone.id,
+              deny: [
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.UseExternalEmojis,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.AddReactions,
+                PermissionFlagsBits.EmbedLinks,
+              ],
+            },
+          ],
+        });
+        const responseEmbed = new EmbedBuilder()
+          .setColor(config.other.colors.green.hex)
+          .setTitle('User Added')
+          .setDescription(`Successfully added <@${user.id}> to this ticket`);
+        await interaction.reply({ embeds: [responseEmbed] });
+      } else if (subCommand === 'remove') {
+        let hasPerms = false;
+        if (interaction.member.roles.cache.has(config.discord.roles.dev)) hasPerms = true;
+        if (interaction.member.roles.cache.has(config.discord.roles.admin)) hasPerms = true;
+        if (interaction.member.roles.cache.has(config.discord.roles.mod)) hasPerms = true;
+        if (!hasPerms) throw new Error('You do not have permission to use this command');
+        const user = await interaction.options.getUser('user');
+        if (!user) throw new Error('User not found?');
+        if (!interaction.channel.name.includes('ticket-')) throw new Error('This is not a ticket channel');
+        const ticketId = interaction.channel.name.split('-')[2];
+        const ticket = tickets[ticketId];
+        const ticketUser = await interaction.guild.members.fetch(ticket.user);
+        await interaction.channel.edit({
+          name: ticket.channelName,
+          type: ChannelType.GuildText,
+          permissionOverwrites: [
+            {
+              id: ticketUser.id,
+              allow: [
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.UseExternalEmojis,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.AddReactions,
+                PermissionFlagsBits.EmbedLinks,
+              ],
+            },
+            {
+              id: config.discord.roles.dev,
+              allow: [
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.UseExternalEmojis,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.AddReactions,
+                PermissionFlagsBits.EmbedLinks,
+              ],
+            },
+            {
+              id: config.discord.roles.admin,
+              allow: [
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.UseExternalEmojis,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.AddReactions,
+                PermissionFlagsBits.EmbedLinks,
+              ],
+            },
+            {
+              id: config.discord.roles.mod,
+              allow: [
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.UseExternalEmojis,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.AddReactions,
+                PermissionFlagsBits.EmbedLinks,
+              ],
+            },
+            {
+              id: user.id,
+              deny: [
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.UseExternalEmojis,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.AddReactions,
+                PermissionFlagsBits.EmbedLinks,
+              ],
+            },
+            {
+              id: interaction.guild.roles.everyone.id,
+              deny: [
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.UseExternalEmojis,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.AttachFiles,
+                PermissionFlagsBits.AddReactions,
+                PermissionFlagsBits.EmbedLinks,
+              ],
+            },
+          ],
+        });
+        const responseEmbed = new EmbedBuilder()
+          .setColor(config.other.colors.green.hex)
+          .setTitle('User Removed')
+          .setDescription(`Successfully removed <@${user.id}> to this ticket`);
+        await interaction.reply({ embeds: [responseEmbed] });
       }
     } catch (error) {
       var errorId = generateID(config.other.errorIdLength);

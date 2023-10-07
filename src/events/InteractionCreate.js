@@ -1,4 +1,13 @@
 const {
+  PermissionFlagsBits,
+  ActionRowBuilder,
+  ButtonBuilder,
+  EmbedBuilder,
+  ButtonStyle,
+  ChannelType,
+  Events,
+} = require('discord.js');
+const {
   isTicketBlacklisted,
   blacklistCheck,
   cleanMessage,
@@ -6,7 +15,6 @@ const {
   writeAt,
   toFixed,
 } = require('../functions/helper.js');
-const { ActionRowBuilder, ButtonBuilder, EmbedBuilder, ButtonStyle, Events } = require('discord.js');
 const { eventMessage, errorMessage } = require('../functions/logger.js');
 const config = require('../../config.json');
 const fs = require('fs');
@@ -166,7 +174,129 @@ module.exports = {
             } at ${interaction.message.id}`
           );
           var tickets = JSON.parse(fs.readFileSync('data/tickets.json'));
-          if (interaction.customId.includes('TICKET_CLOSE_')) {
+          if (interaction.customId === 'TICKET_OPEN') {
+            await interaction.deferReply({ ephemeral: true });
+            var reason = 'No reason provided';
+            const ticketId = generateID(config.other.ticketIdLength).toLowerCase();
+            var channel = await interaction.guild.channels.create({
+              name: `ticket-${interaction.user.username}-${ticketId}`,
+              type: ChannelType.GuildText,
+              permissionOverwrites: [
+                {
+                  id: interaction.user.id,
+                  allow: [
+                    PermissionFlagsBits.ReadMessageHistory,
+                    PermissionFlagsBits.UseExternalEmojis,
+                    PermissionFlagsBits.SendMessages,
+                    PermissionFlagsBits.ViewChannel,
+                    PermissionFlagsBits.AttachFiles,
+                    PermissionFlagsBits.AddReactions,
+                    PermissionFlagsBits.EmbedLinks,
+                  ],
+                },
+                {
+                  id: interaction.guild.roles.everyone.id,
+                  deny: [
+                    PermissionFlagsBits.ReadMessageHistory,
+                    PermissionFlagsBits.UseExternalEmojis,
+                    PermissionFlagsBits.SendMessages,
+                    PermissionFlagsBits.ViewChannel,
+                    PermissionFlagsBits.AttachFiles,
+                    PermissionFlagsBits.AddReactions,
+                    PermissionFlagsBits.EmbedLinks,
+                  ],
+                },
+                {
+                  id: config.discord.roles.dev,
+                  allow: [
+                    PermissionFlagsBits.ReadMessageHistory,
+                    PermissionFlagsBits.UseExternalEmojis,
+                    PermissionFlagsBits.SendMessages,
+                    PermissionFlagsBits.ViewChannel,
+                    PermissionFlagsBits.AttachFiles,
+                    PermissionFlagsBits.AddReactions,
+                    PermissionFlagsBits.EmbedLinks,
+                  ],
+                },
+                {
+                  id: config.discord.roles.admin,
+                  allow: [
+                    PermissionFlagsBits.ReadMessageHistory,
+                    PermissionFlagsBits.UseExternalEmojis,
+                    PermissionFlagsBits.SendMessages,
+                    PermissionFlagsBits.ViewChannel,
+                    PermissionFlagsBits.AttachFiles,
+                    PermissionFlagsBits.AddReactions,
+                    PermissionFlagsBits.EmbedLinks,
+                  ],
+                },
+                {
+                  id: config.discord.roles.mod,
+                  allow: [
+                    PermissionFlagsBits.ReadMessageHistory,
+                    PermissionFlagsBits.UseExternalEmojis,
+                    PermissionFlagsBits.SendMessages,
+                    PermissionFlagsBits.ViewChannel,
+                    PermissionFlagsBits.AttachFiles,
+                    PermissionFlagsBits.AddReactions,
+                    PermissionFlagsBits.EmbedLinks,
+                  ],
+                },
+              ],
+            });
+
+            await writeAt('data/tickets.json', ticketId, {
+              user: interaction.user.id,
+              username: interaction.user.username,
+              channel: channel.id,
+              channelName: `ticket-${interaction.user.username}-${ticketId}`,
+              ticketId: ticketId,
+              reason: reason,
+              createdAt: toFixed(new Date().getTime() / 1000, 0),
+            });
+            await writeAt('data/tickets.json', 'total', tickets.total + 1);
+
+            const ticketEmbed = new EmbedBuilder()
+              .setColor(config.other.colors.green.hex)
+              .setTitle('Ticket Opened')
+              .setDescription(`Ticket opened by ${interaction.user.tag} (${interaction.user.id})`)
+              .addFields({
+                name: 'Reason',
+                value: reason,
+                inline: false,
+              })
+              .setTimestamp()
+              .setFooter({
+                text: `by @kathund | ${config.discord.supportInvite} for support`,
+                iconURL: config.other.logo,
+              });
+
+            const ticketCloseButton = new ButtonBuilder()
+              .setLabel('Close Ticket')
+              .setCustomId(`TICKET_CLOSE_${channel.id}_${interaction.user.id}_${ticketId}`)
+              .setStyle(ButtonStyle.Danger);
+
+            const ticketCloseAndBan = new ButtonBuilder()
+              .setLabel('Close Ticket and Ban User')
+              .setCustomId(`TICKET_BAN_CLOSE_${channel.id}_${interaction.user.id}_${ticketId}`)
+              .setStyle(ButtonStyle.Danger);
+
+            const row = new ActionRowBuilder().addComponents(ticketCloseButton, ticketCloseAndBan);
+
+            await channel.send({ content: `<@${interaction.user.id}>`, embeds: [ticketEmbed], components: [row] });
+            await channel.send({ content: `<@&${config.discord.roles.mod}>` });
+            var ticketChannelMessages = await channel.messages.fetch();
+            ticketChannelMessages.forEach(async (message) => {
+              if (!message.author.id === interaction.client.user.id) return;
+              if (message.content === `<@&${config.discord.roles.mod}>`) return await message.delete();
+              if (message.content === `<@${interaction.user.id}>`) return await message.pin();
+            });
+            const ticketOpenedEmbed = new EmbedBuilder()
+              .setColor(config.other.colors.green.hex)
+              .setTitle('Ticket Opened')
+              .setDescription(`Your ticket has been opened in <#${channel.id}>`);
+            await interaction.followUp({ embeds: [ticketOpenedEmbed], ephemeral: true });
+          } else if (interaction.customId.includes('TICKET_CLOSE_')) {
             const channelId = interaction.customId.split('_')[2];
             let hasPerms = false;
             if (interaction.channel.id !== channelId) return;
