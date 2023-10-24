@@ -164,12 +164,7 @@ module.exports = {
         const ticketEmbed = new EmbedBuilder()
           .setColor(config.other.colors.green.hex)
           .setTitle('Ticket Opened')
-          .setDescription(`Ticket opened by ${interaction.user.tag} (${interaction.user.id})`)
-          .addFields({
-            name: 'Reason',
-            value: reason,
-            inline: false,
-          })
+          .setDescription(`Ticket opened by ${interaction.user.tag} (${interaction.user.id})\n\nReason: ${reason}`)
           .setTimestamp()
           .setFooter({
             text: `by @kathund | ${config.discord.supportInvite} for support`,
@@ -219,6 +214,9 @@ module.exports = {
             content: message.content,
             user: message.author.id,
             username: message.author.username,
+            avatar: message.author.avatar,
+            bot: message.author.bot,
+            displayName: message.author.displayName,
           });
         });
         changed = changed.sort((a, b) => a.timestamp - b.timestamp);
