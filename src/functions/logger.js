@@ -177,7 +177,7 @@ const logger = {
   },
 };
 
-async function updateMessage() {
+export const updateMessage = () => {
   const columns = process.stdout.columns;
   const warning = 'IMPORTANT!';
   const message2 = 'Bot has updated, please restart the bot to apply changes!';
@@ -185,15 +185,12 @@ async function updateMessage() {
   const padding2 = ' '.repeat(Math.floor((columns - message2.length) / 2));
   // eslint-disable-next-line
   console.log(padding + warning + padding + '\n' + padding2 + message2 + padding2);
-}
-
-export default {
-  discordMessage: logger.discord,
-  eventMessage: logger.event,
-  warnMessage: logger.warn,
-  errorMessage: logger.error,
-  scriptMessage: logger.script,
-  cacheMessage: logger.cache,
-  otherMessage: logger.other,
-  updateMessage,
 };
+
+export const discordMessage = logger.discord;
+export const eventMessage = logger.event;
+export const warnMessage = logger.warn;
+export const errorMessage = logger.error;
+export const scriptMessage = logger.script;
+export const cacheMessage = logger.cache;
+export const otherMessage = logger.other;

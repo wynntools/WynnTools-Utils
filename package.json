@@ -4,11 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npx ts-node index.ts",
-    "lint:check": "npx eslint src/ index.ts",
-    "lint": "npx eslint src/ index.ts --fix",
-    "prettier": "npx prettier --write src/ index.ts",
-    "prettier:check": "npx prettier --check src/ index.ts",
+    "start": "npx ts-node index.js",
+    "lint:check": "npx eslint src/ index.js",
+    "lint": "npx eslint src/ index.js --fix",
+    "prettier": "npx prettier --write src/ index.js",
+    "prettier:check": "npx prettier --check src/ index.js",
     "compile": "npx tsc"
   },
   "keywords": [],
@@ -24,6 +24,7 @@
     "winston": "^3.10.0"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.9.0",
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.40.0",
     "eslint-config-prettier": "^9.0.0",

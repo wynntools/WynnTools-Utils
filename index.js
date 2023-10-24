@@ -24,6 +24,7 @@ async function start() {
     const commandFiles = readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
     for (const file of commandFiles) {
       const filePath = join(commandsPath, file);
+      // eslint-disable-next-line
       const command = require(filePath).default;
       if ('data' in command && 'execute' in command) {
         client.commands.set(command.data.name, command);
@@ -51,7 +52,8 @@ async function start() {
           continue;
         }
         scriptMessage(`Started ${file} script`);
-        require(`./src/scripts/${file}`).default
+        // eslint-disable-next-line
+        require(`./src/scripts/${file}`).default;
         await delay(300);
       } catch (error) {
         var errorId = generateID(other.errorIdLength);
@@ -70,7 +72,8 @@ async function start() {
     for (const file of eventFiles) {
       try {
         const filePath = join(eventsPath, file);
-        const event = require(filePath).default
+        // eslint-disable-next-line
+        const event = require(filePath).default;
         if (file.toLowerCase().includes('disabled')) {
           skippedEvents++;
           scriptMessage(`Skipped ${event.name} Event`);

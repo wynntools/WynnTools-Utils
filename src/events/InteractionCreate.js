@@ -1,5 +1,20 @@
-import { PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, EmbedBuilder, ButtonStyle, ChannelType, Events } from 'discord.js';
-import { isTicketBlacklisted, blacklistCheck, cleanMessage, generateID, writeAt, toFixed } from '../functions/helper.js';
+import {
+  PermissionFlagsBits,
+  ActionRowBuilder,
+  ButtonBuilder,
+  EmbedBuilder,
+  ButtonStyle,
+  ChannelType,
+  Events,
+} from 'discord.js';
+import {
+  isTicketBlacklisted,
+  blacklistCheck,
+  cleanMessage,
+  generateID,
+  writeAt,
+  toFixed,
+} from '../functions/helper.js';
 import { eventMessage, errorMessage } from '../functions/logger.js';
 import { other, discord, api } from '../../config.json';
 import { readFileSync } from 'fs';
@@ -8,7 +23,7 @@ export const name = Events.InteractionCreate;
 export async function execute(interaction) {
   try {
     if (interaction.isChatInputCommand()) {
-      const command = client.commands.get(interaction.commandName);
+      const command = global.client.commands.get(interaction.commandName);
       if (!command) return;
       try {
         try {
@@ -27,17 +42,23 @@ export async function execute(interaction) {
             }
           }
           eventMessage(
-            `Interaction Event trigged by ${interaction.user.discriminator == '0'
-              ? interaction.user.username
-              : `${interaction.user.username}#${interaction.user.discriminator}`} (${interaction.user.id}) ran command ${commandString} in ${interaction.guild.id} in ${interaction.channel.id}`
+            `Interaction Event trigged by ${
+              interaction.user.discriminator == '0'
+                ? interaction.user.username
+                : `${interaction.user.username}#${interaction.user.discriminator}`
+            } (${interaction.user.id}) ran command ${commandString} in ${interaction.guild.id} in ${
+              interaction.channel.id
+            }`
           );
         } catch (error) {
           var errorIdLogger = generateID(other.errorIdLength);
           errorMessage(`Error ID: ${errorIdLogger}`);
           errorMessage(error);
         }
-        if (other.devMode &&
-          !(await interaction.guild.members.fetch(interaction.user)).roles.cache.has(discord.roles.dev)) {
+        if (
+          other.devMode &&
+          !(await interaction.guild.members.fetch(interaction.user)).roles.cache.has(discord.roles.dev)
+        ) {
           throw new Error('No Perms');
         }
         try {
@@ -94,7 +115,9 @@ export async function execute(interaction) {
             .setColor(other.colors.red.hex)
             .setTitle('An error occurred')
             .setDescription(
-              `Use </report-bug:${discord.commands['report-bug']}> to report it\nError id - ${errorIdBlacklistCheck}\nError Info - \`${cleanMessage(error)}\``
+              `Use </report-bug:${
+                discord.commands['report-bug']
+              }> to report it\nError id - ${errorIdBlacklistCheck}\nError Info - \`${cleanMessage(error)}\``
             )
             .setFooter({
               text: `by @kathund | ${discord.supportInvite} for support`,
@@ -119,7 +142,9 @@ export async function execute(interaction) {
           .setColor(other.colors.red.hex)
           .setTitle('An error occurred')
           .setDescription(
-            `Use </report-bug:${discord.commands['report-bug']}> to report it\nError id - ${errorIdCheck}\nError Info - \`${cleanMessage(error)}\``
+            `Use </report-bug:${
+              discord.commands['report-bug']
+            }> to report it\nError id - ${errorIdCheck}\nError Info - \`${cleanMessage(error)}\``
           )
           .setFooter({
             text: `by @kathund | ${discord.supportInvite} for support`,
@@ -139,9 +164,13 @@ export async function execute(interaction) {
     } else if (interaction.isButton()) {
       try {
         eventMessage(
-          `Interaction Event trigged by ${interaction.user.discriminator == '0'
-            ? interaction.user.username
-            : `${interaction.user.username}#${interaction.user.discriminator}`} (${interaction.user.id}) clicked button ${interaction.customId} in ${interaction.guild.id} in ${interaction.channel.id} at ${interaction.message.id}`
+          `Interaction Event trigged by ${
+            interaction.user.discriminator == '0'
+              ? interaction.user.username
+              : `${interaction.user.username}#${interaction.user.discriminator}`
+          } (${interaction.user.id}) clicked button ${interaction.customId} in ${interaction.guild.id} in ${
+            interaction.channel.id
+          } at ${interaction.message.id}`
         );
         var tickets = JSON.parse(readFileSync('data/tickets.json'));
         if (interaction.customId === 'TICKET_OPEN') {
@@ -583,7 +612,9 @@ export async function execute(interaction) {
             .setColor(other.colors.red.hex.hex)
             .setTitle('An error occurred')
             .setDescription(
-              `Use </report-bug:${discord.commands['report-bug']}> to report it\nError id - ${errorIdButtons}\nError Info - \`${cleanMessage(error)}\``
+              `Use </report-bug:${
+                discord.commands['report-bug']
+              }> to report it\nError id - ${errorIdButtons}\nError Info - \`${cleanMessage(error)}\``
             )
             .setFooter({
               text: `by @kathund | ${discord.supportInvite} for support`,

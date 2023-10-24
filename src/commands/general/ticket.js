@@ -1,5 +1,20 @@
-import { PermissionFlagsBits, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, EmbedBuilder, ButtonStyle, ChannelType } from 'discord.js';
-import { isTicketBlacklisted, removeFromArray, cleanMessage, generateID, toFixed, writeAt } from '../../functions/helper.js';
+import {
+  PermissionFlagsBits,
+  SlashCommandBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  EmbedBuilder,
+  ButtonStyle,
+  ChannelType,
+} from 'discord.js';
+import {
+  isTicketBlacklisted,
+  removeFromArray,
+  cleanMessage,
+  generateID,
+  toFixed,
+  writeAt,
+} from '../../functions/helper.js';
 import { other, discord, api } from '../../../config.json';
 import { errorMessage } from '../../functions/logger.js';
 import { readFileSync } from 'fs';
@@ -9,38 +24,46 @@ export const data = new SlashCommandBuilder()
   .setName('ticket')
   .setDescription('The command that handles everything to do with tickets')
   .setDMPermission(false)
-  .addSubcommand((subcommand) => subcommand
-    .setName('open')
-    .setDescription('Open a ticket')
-    .addStringOption((option) => option.setName('reason').setDescription('The reason for opening a ticket'))
+  .addSubcommand((subcommand) =>
+    subcommand
+      .setName('open')
+      .setDescription('Open a ticket')
+      .addStringOption((option) => option.setName('reason').setDescription('The reason for opening a ticket'))
   )
-  .addSubcommand((subcommand) => subcommand
-    .setName('close')
-    .setDescription('Close a ticket')
-    .addStringOption((option) => option.setName('reason').setDescription('The reason for closing a ticket'))
+  .addSubcommand((subcommand) =>
+    subcommand
+      .setName('close')
+      .setDescription('Close a ticket')
+      .addStringOption((option) => option.setName('reason').setDescription('The reason for closing a ticket'))
   )
-  .addSubcommand((subcommand) => subcommand
-    .setName('ban')
-    .setDescription('Ban a user from the ticket')
-    .addUserOption((option) => option.setName('user').setDescription('The user to ban').setRequired(true))
-    .addStringOption((option) => option.setName('reason').setDescription('The reason for banning a user'))
+  .addSubcommand((subcommand) =>
+    subcommand
+      .setName('ban')
+      .setDescription('Ban a user from the ticket')
+      .addUserOption((option) => option.setName('user').setDescription('The user to ban').setRequired(true))
+      .addStringOption((option) => option.setName('reason').setDescription('The reason for banning a user'))
   )
-  .addSubcommand((subcommand) => subcommand
-    .setName('unban')
-    .setDescription('Unban a user from the ticket')
-    .addUserOption((option) => option.setName('user').setDescription('The user to unban').setRequired(true))
+  .addSubcommand((subcommand) =>
+    subcommand
+      .setName('unban')
+      .setDescription('Unban a user from the ticket')
+      .addUserOption((option) => option.setName('user').setDescription('The user to unban').setRequired(true))
   )
-  .addSubcommand((subcommand) => subcommand
-    .setName('add')
-    .setDescription('Add a user to a ticket')
-    .addUserOption((option) => option.setName('user').setDescription('The user you want to add to this ticket').setRequired(true)
-    )
+  .addSubcommand((subcommand) =>
+    subcommand
+      .setName('add')
+      .setDescription('Add a user to a ticket')
+      .addUserOption((option) =>
+        option.setName('user').setDescription('The user you want to add to this ticket').setRequired(true)
+      )
   )
-  .addSubcommand((subcommand) => subcommand
-    .setName('remove')
-    .setDescription('remove a user to a ticket')
-    .addUserOption((option) => option.setName('user').setDescription('The user you want to remove from this ticket').setRequired(true)
-    )
+  .addSubcommand((subcommand) =>
+    subcommand
+      .setName('remove')
+      .setDescription('remove a user to a ticket')
+      .addUserOption((option) =>
+        option.setName('user').setDescription('The user you want to remove from this ticket').setRequired(true)
+      )
   );
 export async function execute(interaction) {
   try {
@@ -551,7 +574,9 @@ export async function execute(interaction) {
       .setColor(other.colors.red.hex)
       .setTitle('An error occurred')
       .setDescription(
-        `Use </report-bug:${discord.commands['report-bug']}> to report it\nError id - ${errorId}\nError Info - \`${cleanMessage(error)}\``
+        `Use </report-bug:${
+          discord.commands['report-bug']
+        }> to report it\nError id - ${errorId}\nError Info - \`${cleanMessage(error)}\``
       )
       .setFooter({ text: `by @kathund | ${discord.supportInvite} for support`, iconURL: other.logo });
     const supportDisc = new ButtonBuilder()

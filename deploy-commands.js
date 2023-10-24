@@ -5,7 +5,7 @@ import { REST, Routes } from 'discord.js';
 import { readdirSync } from 'fs';
 import { join } from 'path';
 
-function deployCommands() {
+export const deployCommands = () => {
   const commands = [];
   let skipped = 0;
   const foldersPath = join(__dirname, 'src/commands');
@@ -48,6 +48,4 @@ function deployCommands() {
       errorMessage(error);
     }
   })();
-}
-
-export default { deployCommands };
+};
