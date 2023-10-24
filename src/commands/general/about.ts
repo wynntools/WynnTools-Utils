@@ -1,4 +1,12 @@
-import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, EmbedBuilder, ButtonStyle } from 'discord.js';
+import {
+  CommandInteraction,
+  SlashCommandBuilder,
+  ActionRowBuilder,
+  ColorResolvable,
+  ButtonBuilder,
+  EmbedBuilder,
+  ButtonStyle,
+} from 'discord.js';
 import { generateID, cleanMessage } from '../../functions/helper.js';
 import { errorMessage } from '../../functions/logger.js';
 import { discord, other } from '../../../config.json';
@@ -8,7 +16,8 @@ export const data = new SlashCommandBuilder()
   .setName('about')
   .setDescription('Shows info about the bot')
   .setDMPermission(false);
-export async function execute(interaction) {
+
+export const execute = async (interaction: CommandInteraction) => {
   try {
     const support = new ButtonBuilder().setLabel('support').setURL(discord.supportInvite).setStyle(ButtonStyle.Link);
     const invite = new ButtonBuilder().setLabel('invite').setURL(discord.botInvite).setStyle(ButtonStyle.Link);
@@ -16,10 +25,10 @@ export async function execute(interaction) {
       .setLabel('source')
       .setURL('https://github.com/Kathund/WynnTools')
       .setStyle(ButtonStyle.Link);
-    const row = new ActionRowBuilder().addComponents(support, invite, source);
-    var embed = new EmbedBuilder()
+    const row = new ActionRowBuilder().addComponents(support, invite, source) as any;
+    const embed = new EmbedBuilder()
       .setTitle(`WynnTools Utils Stats`)
-      .setColor(other.colors.green.hex)
+      .setColor(other.colors.green.hex as ColorResolvable)
       .setTimestamp()
       .setDescription(
         'WynnTools - A bot that does stuff with the wynncraft api - The Only bot that uses images **that i have seen**'
@@ -35,11 +44,11 @@ export async function execute(interaction) {
       });
     await interaction.reply({ embeds: [embed], components: [row] });
   } catch (error) {
-    var errorId = generateID(other.errorIdLength);
+    const errorId = generateID(other.errorIdLength);
     errorMessage(`Error Id - ${errorId}`);
     errorMessage(error);
     const errorEmbed = new EmbedBuilder()
-      .setColor(other.colors.red.hex)
+      .setColor(other.colors.red.hex as ColorResolvable)
       .setTitle('An error occurred')
       .setDescription(
         `Use </report-bug:${
@@ -54,4 +63,4 @@ export async function execute(interaction) {
     const row = new ActionRowBuilder().addComponents(supportDisc);
     await interaction.reply({ embeds: [errorEmbed], rows: [row] });
   }
-}
+};

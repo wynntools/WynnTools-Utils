@@ -1,7 +1,5 @@
 /config.json
 node_modules/
 package-lock.json
-a.js
-b.js
-.VSCodeCounter/
 logs/
+dist/

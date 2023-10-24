@@ -1,6 +1,8 @@
 import {
   PermissionFlagsBits,
+  CommandInteraction,
   ActionRowBuilder,
+  ColorResolvable,
   ButtonBuilder,
   EmbedBuilder,
   ButtonStyle,
@@ -20,14 +22,15 @@ import { other, discord, api } from '../../config.json';
 import { readFileSync } from 'fs';
 
 export const name = Events.InteractionCreate;
-export async function execute(interaction) {
+
+export const execute = async (interaction: CommandInteraction) => {
   try {
     if (interaction.isChatInputCommand()) {
-      const command = global.client.commands.get(interaction.commandName);
+      const command = interaction.client.commands.get(interaction.commandName);
       if (!command) return;
       try {
         try {
-          var commandString = await interaction.commandName;
+          const commandString = await interaction.commandName;
           if (interaction.options) {
             if (interaction.options._group) {
               commandString += ` ${await interaction.options.getSubcommandGroup()}`;
@@ -51,7 +54,7 @@ export async function execute(interaction) {
             }`
           );
         } catch (error) {
-          var errorIdLogger = generateID(other.errorIdLength);
+          const errorIdLogger = generateID(other.errorIdLength);
           errorMessage(`Error ID: ${errorIdLogger}`);
           errorMessage(error);
         }
@@ -63,7 +66,7 @@ export async function execute(interaction) {
         }
         try {
           if (!discord.channels.noCommandTracking.includes(interaction.channel.id)) {
-            var userData = JSON.parse(readFileSync('data/userData.json'));
+            const userData = JSON.parse(readFileSync('data/userData.json'));
             let data;
             if (userData[interaction.user.id]) {
               data = {
@@ -90,15 +93,15 @@ export async function execute(interaction) {
             }
           }
         } catch (error) {
-          var errorIdLogUserData = generateID(other.errorIdLength);
+          const errorIdLogUserData = generateID(other.errorIdLength);
           errorMessage(`Error ID: ${errorIdLogUserData}`);
           errorMessage(error);
         }
         try {
-          var blacklistTest = await blacklistCheck(interaction.user.id);
+          const blacklistTest = await blacklistCheck(interaction.user.id);
           if (blacklistTest) {
             const blacklisted = new EmbedBuilder()
-              .setColor(other.colors.red.hex)
+              .setColor(other.colors.red.hex as ColorResolvable)
               .setDescription('You are blacklisted')
               .setFooter({
                 text: `by @kathund | ${discord.supportInvite} for support`,
@@ -108,11 +111,11 @@ export async function execute(interaction) {
           }
           await command.execute(interaction);
         } catch (error) {
-          var errorIdBlacklistCheck = generateID(other.errorIdLength);
+          const errorIdBlacklistCheck = generateID(other.errorIdLength);
           errorMessage(`Error ID: ${errorIdBlacklistCheck}`);
           errorMessage(error);
           const errorEmbed = new EmbedBuilder()
-            .setColor(other.colors.red.hex)
+            .setColor(other.colors.red.hex as ColorResolvable)
             .setTitle('An error occurred')
             .setDescription(
               `Use </report-bug:${
@@ -135,11 +138,11 @@ export async function execute(interaction) {
           }
         }
       } catch (error) {
-        var errorIdCheck = generateID(other.errorIdLength);
+        const errorIdCheck = generateID(other.errorIdLength);
         errorMessage(`Error ID: ${errorIdCheck}`);
         errorMessage(error);
         const errorEmbed = new EmbedBuilder()
-          .setColor(other.colors.red.hex)
+          .setColor(other.colors.red.hex as ColorResolvable)
           .setTitle('An error occurred')
           .setDescription(
             `Use </report-bug:${
@@ -172,12 +175,12 @@ export async function execute(interaction) {
             interaction.channel.id
           } at ${interaction.message.id}`
         );
-        var tickets = JSON.parse(readFileSync('data/tickets.json'));
+        const tickets = JSON.parse(readFileSync('data/tickets.json'));
         if (interaction.customId === 'TICKET_OPEN') {
           await interaction.deferReply({ ephemeral: true });
-          var reason = 'No reason provided';
+          const reason = 'No reason provided';
           const ticketId = generateID(other.ticketIdLength).toLowerCase();
-          var channel = await interaction.guild.channels.create({
+          const channel = await interaction.guild.channels.create({
             name: `ticket-${interaction.user.username}-${ticketId}`,
             type: ChannelType.GuildText,
             permissionOverwrites: [
@@ -256,7 +259,7 @@ export async function execute(interaction) {
           await writeAt('data/tickets.json', 'total', tickets.total + 1);
 
           const ticketEmbed = new EmbedBuilder()
-            .setColor(other.colors.green.hex)
+            .setColor(other.colors.red.hex as ColorResolvable)
             .setTitle('Ticket Opened')
             .setDescription(`Ticket opened by ${interaction.user.tag} (${interaction.user.id})`)
             .addFields({
@@ -284,14 +287,14 @@ export async function execute(interaction) {
 
           await channel.send({ content: `<@${interaction.user.id}>`, embeds: [ticketEmbed], components: [row] });
           await channel.send({ content: `<@&${discord.roles.mod}>` });
-          var ticketChannelMessages = await channel.messages.fetch();
+          const ticketChannelMessages = await channel.messages.fetch();
           ticketChannelMessages.forEach(async (message) => {
             if (!message.author.id === interaction.client.user.id) return;
             if (message.content === `<@&${discord.roles.mod}>`) return await message.delete();
             if (message.content === `<@${interaction.user.id}>`) return await message.pin();
           });
           const ticketOpenedEmbed = new EmbedBuilder()
-            .setColor(other.colors.green.hex)
+            .setColor(other.colors.red.hex as ColorResolvable)
             .setTitle('Ticket Opened')
             .setDescription(`Your ticket has been opened in <#${channel.id}>`);
           await interaction.followUp({ embeds: [ticketOpenedEmbed], ephemeral: true });
@@ -349,7 +352,7 @@ export async function execute(interaction) {
           if (!ticket) throw new Error('Ticket not found? Please report this!');
           await interaction.reply({ content: 'Closing ticket...', ephemeral: true });
           const userCloseEmbed = new EmbedBuilder()
-            .setColor(other.colors.green.hex)
+            .setColor(other.colors.red.hex as ColorResolvable)
             .setTitle('Ticket Closed')
             .setDescription(`Your ticket has been closed by <@${interaction.user.id}>`)
             .addFields(
@@ -386,7 +389,7 @@ export async function execute(interaction) {
             });
 
           const closedLoggingEmbed = new EmbedBuilder()
-            .setColor(other.colors.green.hex)
+            .setColor(other.colors.red.hex as ColorResolvable)
             .setTitle('Ticket Closed')
             .setDescription(`Ticket closed by <@${interaction.user.id}>`)
             .addFields(
@@ -449,7 +452,7 @@ export async function execute(interaction) {
           await writeAt('data/tickets.json', 'blacklist', ticketBlacklist);
 
           const userBanEmbed = new EmbedBuilder()
-            .setColor(other.colors.red.hex)
+            .setColor(other.colors.red.hex as ColorResolvable)
             .setTitle('Ticket Blacklisted')
             .setDescription(`Successfully blacklisted <@${userId}> from tickets`)
             .setTimestamp()
@@ -504,7 +507,7 @@ export async function execute(interaction) {
           if (res.status != 201) throw new Error('Error creating transcript');
           await interaction.followUp({ content: 'Closing ticket...', ephemeral: true });
           const userCloseEmbed = new EmbedBuilder()
-            .setColor(other.colors.green.hex)
+            .setColor(other.colors.red.hex as ColorResolvable)
             .setTitle('Ticket Closed')
             .setDescription(`Your ticket has been closed by <@${interaction.user.id}>`)
             .addFields(
@@ -541,7 +544,7 @@ export async function execute(interaction) {
             });
 
           const closedLoggingEmbed = new EmbedBuilder()
-            .setColor(other.colors.green.hex)
+            .setColor(other.colors.red.hex as ColorResolvable)
             .setTitle('Ticket Closed')
             .setDescription(`Ticket closed by <@${interaction.user.id}>`)
             .addFields(
@@ -586,7 +589,7 @@ export async function execute(interaction) {
         if (String(error).includes('NO_ERROR_ID_')) {
           errorMessage(error);
           const errorEmbed = new EmbedBuilder()
-            .setColor(other.colors.red.hex.hex)
+            .setColor(other.colors.red.hex as ColorResolvable)
             .setTitle('An error occurred')
             .setDescription(`Error Info - \`${cleanMessage(error)}\``)
             .setFooter({
@@ -605,11 +608,11 @@ export async function execute(interaction) {
             return await interaction.reply({ embeds: [errorEmbed], rows: [row], ephemeral: true });
           }
         } else {
-          var errorIdButtons = generateID(other.errorIdLength);
+          const errorIdButtons = generateID(other.errorIdLength);
           errorMessage(`Error Id - ${errorIdButtons}`);
           errorMessage(error);
           const errorEmbed = new EmbedBuilder()
-            .setColor(other.colors.red.hex.hex)
+            .setColor(other.colors.red.hex as ColorResolvable)
             .setTitle('An error occurred')
             .setDescription(
               `Use </report-bug:${
@@ -634,8 +637,8 @@ export async function execute(interaction) {
       }
     }
   } catch (error) {
-    var errorId = generateID(other.errorIdLength);
+    const errorId = generateID(other.errorIdLength);
     errorMessage(`Error Id - ${errorId}`);
     errorMessage(error);
   }
-}
+};

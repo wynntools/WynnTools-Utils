@@ -11,9 +11,9 @@ if (other.timezone == null) {
   timezoneStuff = { scheduled: true, timezone: other.timezone };
 }
 
-var num = 0;
+let num = 0;
 global.client.user.setPresence({ activities: [{ name: 'Over Tickets', type: ActivityType.Watching }] });
-var activities = [
+const activities = [
   { id: 'ticket', title: 'Over Tickets', type: 'Watching' },
   { id: 'support', title: 'Over The Support Server', type: 'Watching' },
 ];
@@ -29,7 +29,7 @@ schedule(
       num++;
       if (num == activities.length) num = 0;
     } catch (error) {
-      var errorId = generateID(other.errorIdLength);
+      const errorId = generateID(other.errorIdLength);
       errorMessage(`Error Id - ${errorId}`);
       errorMessage(error);
     }

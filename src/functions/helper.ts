@@ -11,7 +11,7 @@ export const generateID = (length) => {
     let result = '';
     const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890',
       charactersLength = characters.length;
-    for (var i = 0; i < length; i++) {
+    for (const i = 0; i < length; i++) {
       result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return result;
@@ -33,7 +33,7 @@ export const getCurrentTime = () => {
       });
     }
   } catch (error) {
-    var errorId = generateID(other.errorIdLength);
+    const errorId = generateID(other.errorIdLength);
     errorMessage(`Error Id - ${errorId}`);
     errorMessage(error);
     return error;
@@ -63,7 +63,7 @@ export const blacklistCheck = async (id) => {
       return false;
     }
   } catch (error) {
-    var errorId = generateID(other.errorIdLength);
+    const errorId = generateID(other.errorIdLength);
     errorMessage(`Error Id - ${errorId}`);
     errorMessage(error);
     return error;
@@ -85,7 +85,7 @@ export const toFixed = (num, fixed) => {
 
     return parts.join('.');
   } catch (error) {
-    var errorId = generateID(other.errorIdLength);
+    const errorId = generateID(other.errorIdLength);
     errorMessage(`Error Id - ${errorId}`);
     errorMessage(error);
     return error;
