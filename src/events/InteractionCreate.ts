@@ -30,7 +30,7 @@ export const execute = async (interaction: CommandInteraction) => {
       if (!command) return;
       try {
         try {
-          const commandString = await interaction.commandName;
+          let commandString = await interaction.commandName;
           if (interaction.options) {
             if (interaction.options._group) {
               commandString += ` ${await interaction.options.getSubcommandGroup()}`;
