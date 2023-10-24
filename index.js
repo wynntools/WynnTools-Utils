@@ -1,11 +1,11 @@
-const { discordMessage, scriptMessage, warnMessage, errorMessage } = require('./src/functions/logger.js');
-const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
+import { discordMessage, scriptMessage, warnMessage, errorMessage } from './src/functions/logger.js';
+import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const { toFixed, generateID } = require('./src/functions/helper.js');
-const { deployCommands } = require('./deploy-commands.js');
-const config = require('./config.json');
-const path = require('path');
-const fs = require('fs');
+import { toFixed, generateID } from './src/functions/helper.js';
+import { deployCommands } from './deploy-commands.js';
+import { other, discord } from './config.json';
+import { readdirSync } from 'fs';
+import { join } from 'path';
 
 async function start() {
   const client = new Client({
@@ -17,14 +17,14 @@ async function start() {
     ],
   });
   client.commands = new Collection();
-  const foldersPath = path.join(__dirname, 'src/commands');
-  const commandFolders = fs.readdirSync(foldersPath);
+  const foldersPath = join(__dirname, 'src/commands');
+  const commandFolders = readdirSync(foldersPath);
   for (const folder of commandFolders) {
-    const commandsPath = path.join(foldersPath, folder);
-    const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
+    const commandsPath = join(foldersPath, folder);
+    const commandFiles = readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
     for (const file of commandFiles) {
-      const filePath = path.join(commandsPath, file);
-      const command = require(filePath);
+      const filePath = join(commandsPath, file);
+      const command = require(filePath).default;
       if ('data' in command && 'execute' in command) {
         client.commands.set(command.data.name, command);
       } else {
@@ -40,7 +40,7 @@ async function start() {
     global.uptime = toFixed(new Date().getTime() / 1000, 0);
     global.client = client;
     discordMessage(`Client Logged in as ${client.user.tag}`);
-    const scriptFiles = fs.readdirSync('./src/scripts').filter((file) => file.endsWith('.js'));
+    const scriptFiles = readdirSync('./src/scripts').filter((file) => file.endsWith('.js'));
     scriptMessage(`Found ${scriptFiles.length} scripts and running them all`);
     var skipped = 0;
     for (const file of scriptFiles) {
@@ -51,10 +51,10 @@ async function start() {
           continue;
         }
         scriptMessage(`Started ${file} script`);
-        require(`./src/scripts/${file}`);
+        require(`./src/scripts/${file}`).default
         await delay(300);
       } catch (error) {
-        var errorId = generateID(config.other.errorIdLength);
+        var errorId = generateID(other.errorIdLength);
         errorMessage(`Error ID: ${errorId}`);
         errorMessage(error);
       }
@@ -63,14 +63,14 @@ async function start() {
   });
 
   try {
-    const eventsPath = path.join(__dirname, 'src/events');
-    const eventFiles = fs.readdirSync(eventsPath).filter((file) => file.endsWith('.js'));
+    const eventsPath = join(__dirname, 'src/events');
+    const eventFiles = readdirSync(eventsPath).filter((file) => file.endsWith('.js'));
     scriptMessage(`Found ${eventFiles.length} Events and running them all`);
     var skippedEvents = 0;
     for (const file of eventFiles) {
       try {
-        const filePath = path.join(eventsPath, file);
-        const event = require(filePath);
+        const filePath = join(eventsPath, file);
+        const event = require(filePath).default
         if (file.toLowerCase().includes('disabled')) {
           skippedEvents++;
           scriptMessage(`Skipped ${event.name} Event`);
@@ -81,19 +81,19 @@ async function start() {
         scriptMessage(`Started ${event.name} Event`);
         await delay(300);
       } catch (error) {
-        var startingEventErrorId = generateID(config.other.errorIdLength);
+        var startingEventErrorId = generateID(other.errorIdLength);
         errorMessage(`Error ID: ${startingEventErrorId}`);
         errorMessage(error);
       }
     }
     scriptMessage(`Started ${eventFiles.length - skippedEvents} event(s) and skipped ${skippedEvents} events(s)`);
   } catch (error) {
-    var errorId = generateID(config.other.errorIdLength);
+    var errorId = generateID(other.errorIdLength);
     errorMessage(`Error ID: ${errorId}`);
     errorMessage(error);
   }
 
-  client.login(config.discord.token);
+  client.login(discord.token);
 }
 
 start();

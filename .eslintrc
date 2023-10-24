@@ -1,31 +1,27 @@
 {
-  "env": {
-    "commonjs": true,
-    "es2021": true,
-    "node": true
-  },
-  "extends": ["eslint:recommended", "plugin:import/recommended"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:import/recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/eslint-recommended"
+  ],
+  "env": { "commonjs": true, "es2021": true, "node": true },
+  "parserOptions": { "ecmaVersion": "latest" },
+  "plugins": [ "@typescript-eslint" ],
   "overrides": [],
-  "parserOptions": {
-    "ecmaVersion": "latest"
-  },
-  "globals": {
-    "client": true,
-    "uptime": true
-  },
   "rules": {
-    "curly": ["error", "multi-line", "consistent"],
-    "no-unused-vars": ["error", { "args": "none" }],
-    "prefer-const": ["warn", { "destructuring": "all" }],
     "no-constant-condition": ["error", { "checkLoops": false }],
-    "import/extensions": ["error", "always", { "ts": "never" }],
+    "curly": [ "error", "multi-line", "consistent" ],
+    "@typescript-eslint/no-explicit-any": "off",
     "no-template-curly-in-string": "error",
     "no-use-before-define": "error",
+    "import/no-unresolved": "off",
     "no-duplicate-case": "error",
     "no-throw-literal": "error",
     "no-self-compare": "error",
     "no-unreachable": "error",
-    "sort-imports": "error",
+    "no-unused-vars": "error",
+    "prefer-const": "error",
     "no-console": "error",
     "sort-vars": "error",
     "no-empty": "error",

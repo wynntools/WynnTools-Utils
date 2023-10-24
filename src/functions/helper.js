@@ -1,10 +1,10 @@
-const { errorMessage } = require('./logger.js');
-const config = require('../../config.json');
-const getDirName = require('path').dirname;
-const fsExtra = require('fs-extra');
-const { set } = require('lodash');
-const mkdirp = require('mkdirp');
-const fs = require('fs');
+import { readJson, writeJson } from 'fs-extra';
+import { dirname as getDirName } from 'path';
+import { errorMessage } from './logger.js';
+import { other } from '../../config.json';
+import { readFileSync } from 'fs';
+import { set } from 'lodash';
+import { sync } from 'mkdirp';
 
 function generateID(length) {
   try {
@@ -22,18 +22,18 @@ function generateID(length) {
 
 function getCurrentTime() {
   try {
-    if (config.other.timezone === null) {
+    if (other.timezone === null) {
       return new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
     } else {
       return new Date().toLocaleString('en-US', {
         hour: 'numeric',
         minute: 'numeric',
         hour12: true,
-        timeZone: config.other.timezone,
+        timeZone: other.timezone,
       });
     }
   } catch (error) {
-    var errorId = generateID(config.other.errorIdLength);
+    var errorId = generateID(other.errorIdLength);
     errorMessage(`Error Id - ${errorId}`);
     errorMessage(error);
     return error;
@@ -42,28 +42,28 @@ function getCurrentTime() {
 
 async function writeAt(filePath, jsonPath, value) {
   try {
-    mkdirp.sync(getDirName(filePath));
-    const json = await fsExtra.readJson(filePath);
+    sync(getDirName(filePath));
+    const json = await readJson(filePath);
     set(json, jsonPath, value);
-    return await fsExtra.writeJson(filePath, json);
+    return await writeJson(filePath, json);
   } catch (error) {
     errorMessage(error);
     const json_1 = {};
     set(json_1, jsonPath, value);
-    return await fsExtra.writeJson(filePath, json_1);
+    return await writeJson(filePath, json_1);
   }
 }
 
 async function blacklistCheck(id) {
   try {
-    const blacklist = await JSON.parse(fs.readFileSync('data/blacklist.json', 'utf8'));
+    const blacklist = await JSON.parse(readFileSync('data/blacklist.json', 'utf8'));
     if (blacklist[id]) {
       return true;
     } else {
       return false;
     }
   } catch (error) {
-    var errorId = generateID(config.other.errorIdLength);
+    var errorId = generateID(other.errorIdLength);
     errorMessage(`Error Id - ${errorId}`);
     errorMessage(error);
     return error;
@@ -85,7 +85,7 @@ function toFixed(num, fixed) {
 
     return parts.join('.');
   } catch (error) {
-    var errorId = generateID(config.other.errorIdLength);
+    var errorId = generateID(other.errorIdLength);
     errorMessage(`Error Id - ${errorId}`);
     errorMessage(error);
     return error;
@@ -150,7 +150,7 @@ async function removeFromArray(array, id) {
   }
 }
 
-module.exports = {
+export default {
   generateID,
   getCurrentTime,
   writeAt,
