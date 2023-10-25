@@ -6,12 +6,12 @@ import { readFileSync } from 'fs';
 import { set } from 'lodash';
 import { sync } from 'mkdirp';
 
-export const generateID = (length) => {
+export const generateID = (length: number) => {
   try {
     let result = '';
     const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890',
       charactersLength = characters.length;
-    for (const i = 0; i < length; i++) {
+    for (let i = 0; i < length; i++) {
       result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return result;
@@ -40,7 +40,7 @@ export const getCurrentTime = () => {
   }
 };
 
-export const writeAt = async (filePath, jsonPath, value) => {
+export const writeAt = async (filePath: string, jsonPath: string, value: any) => {
   try {
     sync(getDirName(filePath));
     const json = await readJson(filePath);
@@ -54,7 +54,7 @@ export const writeAt = async (filePath, jsonPath, value) => {
   }
 };
 
-export const blacklistCheck = async (id) => {
+export const blacklistCheck = async (id: string) => {
   try {
     const blacklist = await JSON.parse(readFileSync('data/blacklist.json', 'utf8'));
     if (blacklist[id]) {
@@ -70,7 +70,7 @@ export const blacklistCheck = async (id) => {
   }
 };
 
-export const toFixed = (num, fixed) => {
+export const toFixed = (num: any, fixed: number) => {
   try {
     if (fixed === undefined) fixed = 0;
     const response = new RegExp('^-?\\d+(?:\\.\\d{0,' + (fixed || -1) + '})?');
@@ -92,11 +92,11 @@ export const toFixed = (num, fixed) => {
   }
 };
 
-export const cleanMessage = (message) => {
+export const cleanMessage = (message: any) => {
   return message.toString().replaceAll('Error: ', '').replaceAll('`', '').replaceAll('ez', 'easy');
 };
 
-export const convertChannelType = (type) => {
+export const convertChannelType = (type: number) => {
   if (type === 0) {
     return 'GuildText';
   } else if (type === 1) {
@@ -128,7 +128,7 @@ export const convertChannelType = (type) => {
   }
 };
 
-export const isTicketBlacklisted = (userID, ticketBlacklist) => {
+export const isTicketBlacklisted = (userID: string, ticketBlacklist: any) => {
   for (const user of ticketBlacklist) {
     if (user.user === userID) {
       return true;
@@ -137,9 +137,9 @@ export const isTicketBlacklisted = (userID, ticketBlacklist) => {
   return false;
 };
 
-export const removeFromArray = (array, id) => {
+export const removeFromArray = (array: any, id: string) => {
   try {
-    const index = array.findIndex((obj) => obj.user === id);
+    const index = array.findIndex((obj: any) => obj.user === id);
     if (index > -1) {
       array.splice(index, 1);
       return array;

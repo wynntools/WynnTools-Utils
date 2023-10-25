@@ -7,6 +7,7 @@ import {
   EmbedBuilder,
   ButtonStyle,
   ChannelType,
+  BaseClient,
   Events,
 } from 'discord.js';
 import {
@@ -23,7 +24,7 @@ import { readFileSync } from 'fs';
 
 export const name = Events.InteractionCreate;
 
-export const execute = async (interaction: CommandInteraction) => {
+export const execute = async (interaction: ChatInputCommandInteraction) => {
   try {
     if (interaction.isChatInputCommand()) {
       const command = interaction.client.commands.get(interaction.commandName);

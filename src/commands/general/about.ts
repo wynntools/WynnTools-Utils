@@ -1,5 +1,5 @@
 import {
-  CommandInteraction,
+  ChatInputCommandInteraction,
   SlashCommandBuilder,
   ActionRowBuilder,
   ColorResolvable,
@@ -17,7 +17,7 @@ export const data = new SlashCommandBuilder()
   .setDescription('Shows info about the bot')
   .setDMPermission(false);
 
-export const execute = async (interaction: CommandInteraction) => {
+export const execute = async (interaction: ChatInputCommandInteraction) => {
   try {
     const support = new ButtonBuilder().setLabel('support').setURL(discord.supportInvite).setStyle(ButtonStyle.Link);
     const invite = new ButtonBuilder().setLabel('invite').setURL(discord.botInvite).setStyle(ButtonStyle.Link);
