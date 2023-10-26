@@ -19,10 +19,10 @@ import {
   generateID,
   writeAt,
   toFixed,
-} from '../functions/helper.js';
+} from '../functions/helper';
 import { eventMessage, errorMessage } from '../functions/logger';
 import { other, discord, api } from '../../config.json';
-import { arrayMessages } from '../types/main.js';
+import { arrayMessages } from '../types/main';
 import { readFileSync } from 'fs';
 
 export const name = Events.InteractionCreate;
