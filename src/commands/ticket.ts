@@ -8,17 +8,13 @@ import {
   EmbedBuilder,
   ButtonStyle,
   ChannelType,
+  TextChannel,
+  GuildMember,
+  Guild,
 } from 'discord.js';
-import {
-  isTicketBlacklisted,
-  removeFromArray,
-  cleanMessage,
-  generateID,
-  toFixed,
-  writeAt,
-} from '../../functions/helper.js';
-import { other, discord, api } from '../../../config.json';
-import { errorMessage } from '../../functions/logger.js';
+import { isTicketBlacklisted, removeFromArray, cleanMessage, generateID, toFixed, writeAt } from '../functions/helper';
+import { other, discord, api } from '../../config.json';
+import { errorMessage } from '../functions/logger';
 import { readFileSync } from 'fs';
 import fetch from 'node-fetch';
 
@@ -70,24 +66,24 @@ export const data = new SlashCommandBuilder()
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
   try {
-    const { options, user, guild, channel, client, member } = interaction;
-    const tickets = JSON.parse(readFileSync('data/tickets.json'));
-    const subCommand = options.getSubcommand();
+    const memberRoles = (interaction.member as GuildMember).roles.cache.map((role) => role.id);
+    const tickets = JSON.parse(readFileSync('data/tickets.json') as any);
+    const subCommand = interaction.options.getSubcommand();
     const ticketBlacklist = tickets.blacklist;
-    if (isTicketBlacklisted(user.id, ticketBlacklist)) {
+    if (isTicketBlacklisted(interaction.user.id, ticketBlacklist)) {
       throw new Error('You are blacklisted from tickets');
     }
     if (subCommand === 'open') {
       await interaction.deferReply({ ephemeral: true });
-      const reason = options.getString('reason') || 'No reason provided';
-      if (tickets[user.id]) throw new Error('You already have a ticket');
-      const ticketId = generateID(other.ticketIdLength).toLowerCase();
-      const channel = await guild.channels.create({
-        name: `ticket-${user.username}-${ticketId}`,
+      const reason = interaction.options.getString('reason') || 'No reason provided';
+      if (tickets[interaction.user.id]) throw new Error('You already have a ticket');
+      const ticketId = (generateID(other.ticketIdLength) as string).toLowerCase();
+      const channel = (await interaction?.guild?.channels.create({
+        name: `ticket-${interaction.user.username}-${ticketId}`,
         type: ChannelType.GuildText,
         permissionOverwrites: [
           {
-            id: user.id,
+            id: interaction.user.id,
             allow: [
               PermissionFlagsBits.ReadMessageHistory,
               PermissionFlagsBits.UseExternalEmojis,
@@ -99,7 +95,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
             ],
           },
           {
-            id: guild.roles.everyone.id,
+            id: (interaction.guild as Guild).roles.everyone.id,
             deny: [
               PermissionFlagsBits.ReadMessageHistory,
               PermissionFlagsBits.UseExternalEmojis,
@@ -147,13 +143,13 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
             ],
           },
         ],
-      });
+      })) as TextChannel;
 
       await writeAt('data/tickets.json', ticketId, {
-        user: user.id,
-        username: user.username,
+        user: interaction.user.id,
+        username: interaction.user.username,
         channel: channel.id,
-        channelName: `ticket-${user.username}-${ticketId}`,
+        channelName: `ticket-${interaction.user.username}-${ticketId}`,
         ticketId: ticketId,
         reason: reason,
         createdAt: toFixed(new Date().getTime() / 1000, 0),
@@ -163,32 +159,31 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       const ticketEmbed = new EmbedBuilder()
         .setColor(other.colors.red.hex as ColorResolvable)
         .setTitle('Ticket Opened')
-        .setDescription(`Ticket opened by ${user.tag} (${user.id})\n\nReason: ${reason}`)
+        .setDescription(`Ticket opened by ${interaction.user.tag} (${interaction.user.id})\n\nReason: ${reason}`)
         .setTimestamp()
         .setFooter({
           text: `by @kathund | ${discord.supportInvite} for support`,
           iconURL: other.logo,
         });
 
-      const ticketCloseButton = new ButtonBuilder()
-        .setLabel('Close Ticket')
-        .setCustomId(`TICKET_CLOSE_${channel.id}_${user.id}_${ticketId}`)
-        .setStyle(ButtonStyle.Danger);
+      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+          .setLabel('Close Ticket')
+          .setCustomId(`TICKET_CLOSE_${channel.id}_${interaction.user.id}_${ticketId}`)
+          .setStyle(ButtonStyle.Danger),
+        new ButtonBuilder()
+          .setLabel('Close Ticket and Ban User')
+          .setCustomId(`TICKET_BAN_CLOSE_${channel.id}_${interaction.user.id}_${ticketId}`)
+          .setStyle(ButtonStyle.Danger)
+      );
 
-      const ticketCloseAndBan = new ButtonBuilder()
-        .setLabel('Close Ticket and Ban User')
-        .setCustomId(`TICKET_BAN_CLOSE_${channel.id}_${user.id}_${ticketId}`)
-        .setStyle(ButtonStyle.Danger);
-
-      const row = new ActionRowBuilder().addComponents(ticketCloseButton, ticketCloseAndBan);
-
-      await channel.send({ content: `<@${user.id}>`, embeds: [ticketEmbed], components: [row] });
+      await channel.send({ content: `<@${interaction.user.id}>`, embeds: [ticketEmbed], components: [row] });
       await channel.send({ content: `<@&${discord.roles.mod}>` });
       const ticketChannelMessages = await channel.messages.fetch();
       ticketChannelMessages.forEach(async (message) => {
-        if (!message.author.id === client.user.id) return;
+        if (!message.author.id === interaction.client.user.id) return;
         if (message.content === `<@&${discord.roles.mod}>`) return await message.delete();
-        if (message.content === `<@${user.id}>`) return await message.pin();
+        if (message.content === `<@${interaction.user.id}>`) return await message.pin();
       });
       const ticketOpenedEmbed = new EmbedBuilder()
         .setColor(other.colors.red.hex as ColorResolvable)
@@ -196,17 +191,21 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         .setDescription(`Your ticket has been opened in <#${channel.id}>`);
       await interaction.editReply({ embeds: [ticketOpenedEmbed] });
     } else if (subCommand === 'close') {
-      let hasPerms = false;
-      if (member.roles.cache.has(discord.roles.dev)) hasPerms = true;
-      if (member.roles.cache.has(discord.roles.admin)) hasPerms = true;
-      if (member.roles.cache.has(discord.roles.mod)) hasPerms = true;
-      if (!hasPerms) throw new Error('You do not have permission to use this command');
-      const reason = options.getString('reason') || 'No reason provided';
-      if (!channel.name.includes('ticket-')) throw new Error('This is not a ticket channel');
-      const ticketId = channel.name.split('-')[2];
+      if (
+        !memberRoles.some((role) =>
+          ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role)
+        )
+      ) {
+        throw new Error('You do not have permission to use this command');
+      }
+      const reason = interaction.options.getString('reason') || 'No reason provided';
+      if (!(interaction.channel as TextChannel).name.includes('ticket-')) {
+        throw new Error('This is not a ticket channel');
+      }
+      const ticketId = (interaction.channel as TextChannel).name.split('-')[2];
       const ticket = tickets[ticketId];
-      const messages = await channel.messages.fetch();
-      const changed = [];
+      const messages = await (interaction.channel as TextChannel).messages.fetch();
+      let changed = [];
       messages.forEach((message) => {
         changed.push({
           timestamp: message.createdTimestamp,
@@ -232,8 +231,8 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
           },
           closed: {
             by: {
-              id: user.id,
-              username: user.username,
+              id: interaction.user.id,
+              username: interaction.user.username,
             },
             reason: reason,
             timestamp: toFixed(new Date().getTime() / 1000, 0),
@@ -252,7 +251,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       const userCloseEmbed = new EmbedBuilder()
         .setColor(other.colors.red.hex as ColorResolvable)
         .setTitle('Ticket Closed')
-        .setDescription(`Your ticket has been closed by <@${user.id}>`)
+        .setDescription(`Your ticket has been closed by <@${interaction.user.id}>`)
         .addFields(
           {
             name: 'Reason',
@@ -289,7 +288,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       const closedLoggingEmbed = new EmbedBuilder()
         .setColor(other.colors.red.hex as ColorResolvable)
         .setTitle('Ticket Closed')
-        .setDescription(`Ticket closed by <@${user.id}>`)
+        .setDescription(`Ticket closed by <@${interaction.user.id}>`)
         .addFields(
           {
             name: 'Reason',
@@ -322,19 +321,23 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
           text: `by @kathund | ${discord.supportInvite} for support`,
           iconURL: other.logo,
         });
-      const loggingChannel = guild.channels.cache.get(discord.channels.ticketLogging);
+      const loggingChannel = (interaction.guild as Guild).channels.cache.get(
+        discord.channels.ticketLogging
+      ) as TextChannel;
       if (!loggingChannel) throw new Error('Ticket logging channel not found? Please report this!');
       await loggingChannel.send({ embeds: [closedLoggingEmbed] });
-      await client.users.send(ticket.user, { embeds: [userCloseEmbed] });
-      await channel.delete();
+      await interaction.client.users.send(ticket.user, { embeds: [userCloseEmbed] });
+      await (interaction.channel as TextChannel).delete();
     } else if (subCommand === 'ban') {
-      let hasPerms = false;
-      if (member.roles.cache.has(discord.roles.dev)) hasPerms = true;
-      if (member.roles.cache.has(discord.roles.admin)) hasPerms = true;
-      if (member.roles.cache.has(discord.roles.mod)) hasPerms = true;
-      if (!hasPerms) throw new Error('You do not have permission to use this command');
-      const user = options.getUser('user');
-      const reason = options.getString('reason') || 'No reason provided';
+      if (
+        !memberRoles.some((role) =>
+          ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role)
+        )
+      ) {
+        throw new Error('You do not have permission to use this command');
+      }
+      const user = interaction.options.getUser('user');
+      const reason = interaction.options.getString('reason') || 'No reason provided';
       if (!user) throw new Error('User not found?');
       if (isTicketBlacklisted(user.id, ticketBlacklist)) {
         throw new Error('User already blacklisted from tickets');
@@ -358,12 +361,14 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 
       await interaction.reply({ embeds: [userBanEmbed] });
     } else if (subCommand === 'unban') {
-      let hasPerms = false;
-      if (member.roles.cache.has(discord.roles.dev)) hasPerms = true;
-      if (member.roles.cache.has(discord.roles.admin)) hasPerms = true;
-      if (member.roles.cache.has(discord.roles.mod)) hasPerms = true;
-      if (!hasPerms) throw new Error('You do not have permission to use this command');
-      const user = options.getUser('user');
+      if (
+        !memberRoles.some((role) =>
+          ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role)
+        )
+      ) {
+        throw new Error('You do not have permission to use this command');
+      }
+      const user = interaction.options.getUser('user');
       if (!user) throw new Error('User not found?');
       if (!isTicketBlacklisted(user.id, ticketBlacklist)) {
         throw new Error("User isn't ticket blacklisted");
@@ -380,18 +385,22 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         });
       await interaction.reply({ embeds: [userUnbanEmbed] });
     } else if (subCommand === 'add') {
-      let hasPerms = false;
-      if (member.roles.cache.has(discord.roles.dev)) hasPerms = true;
-      if (member.roles.cache.has(discord.roles.admin)) hasPerms = true;
-      if (member.roles.cache.has(discord.roles.mod)) hasPerms = true;
-      if (!hasPerms) throw new Error('You do not have permission to use this command');
-      const user = options.getUser('user');
+      if (
+        !memberRoles.some((role) =>
+          ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role)
+        )
+      ) {
+        throw new Error('You do not have permission to use this command');
+      }
+      const user = interaction.options.getUser('user');
       if (!user) throw new Error('User not found?');
-      if (!channel.name.includes('ticket-')) throw new Error('This is not a ticket channel');
-      const ticketId = channel.name.split('-')[2];
+      if (!(interaction.channel as TextChannel).name.includes('ticket-')) {
+        throw new Error('This is not a ticket channel');
+      }
+      const ticketId = (interaction.channel as TextChannel).name.split('-')[2];
       const ticket = tickets[ticketId];
-      const ticketUser = await guild.members.fetch(ticket.user);
-      await channel.edit({
+      const ticketUser = await (interaction.guild as Guild).members.fetch(ticket.user);
+      await (interaction.channel as TextChannel).edit({
         name: ticket.channelName,
         type: ChannelType.GuildText,
         permissionOverwrites: [
@@ -456,7 +465,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
             ],
           },
           {
-            id: guild.roles.everyone.id,
+            id: (interaction.guild as Guild).roles.everyone.id,
             deny: [
               PermissionFlagsBits.ReadMessageHistory,
               PermissionFlagsBits.UseExternalEmojis,
@@ -475,18 +484,22 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         .setDescription(`Successfully added <@${user.id}> to this ticket`);
       await interaction.reply({ embeds: [responseEmbed] });
     } else if (subCommand === 'remove') {
-      let hasPerms = false;
-      if (member.roles.cache.has(discord.roles.dev)) hasPerms = true;
-      if (member.roles.cache.has(discord.roles.admin)) hasPerms = true;
-      if (member.roles.cache.has(discord.roles.mod)) hasPerms = true;
-      if (!hasPerms) throw new Error('You do not have permission to use this command');
-      const user = options.getUser('user');
+      if (
+        !memberRoles.some((role) =>
+          ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role)
+        )
+      ) {
+        throw new Error('You do not have permission to use this command');
+      }
+      const user = interaction.options.getUser('user');
       if (!user) throw new Error('User not found?');
-      if (!channel.name.includes('ticket-')) throw new Error('This is not a ticket channel');
-      const ticketId = channel.name.split('-')[2];
+      if (!(interaction.channel as TextChannel).name.includes('ticket-')) {
+        throw new Error('This is not a ticket channel');
+      }
+      const ticketId = (interaction.channel as TextChannel).name.split('-')[2];
       const ticket = tickets[ticketId];
-      const ticketUser = await guild.members.fetch(ticket.user);
-      await channel.edit({
+      const ticketUser = await (interaction.guild as Guild).members.fetch(ticket.user);
+      await (interaction.channel as TextChannel).edit({
         name: ticket.channelName,
         type: ChannelType.GuildText,
         permissionOverwrites: [
@@ -551,7 +564,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
             ],
           },
           {
-            id: guild.roles.everyone.id,
+            id: (interaction.guild as Guild).roles.everyone.id,
             deny: [
               PermissionFlagsBits.ReadMessageHistory,
               PermissionFlagsBits.UseExternalEmojis,
@@ -570,7 +583,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         .setDescription(`Successfully removed <@${user.id}> to this ticket`);
       await interaction.reply({ embeds: [responseEmbed] });
     }
-  } catch (error) {
+  } catch (error: any) {
     const errorId = generateID(other.errorIdLength);
     errorMessage(`Error Id - ${errorId}`);
     errorMessage(error);
@@ -583,15 +596,13 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         }> to report it\nError id - ${errorId}\nError Info - \`${cleanMessage(error)}\``
       )
       .setFooter({ text: `by @kathund | ${discord.supportInvite} for support`, iconURL: other.logo });
-    const supportDisc = new ButtonBuilder()
-      .setLabel('Support Discord')
-      .setURL(discord.supportInvite)
-      .setStyle(ButtonStyle.Link);
-    const row = new ActionRowBuilder().addComponents(supportDisc);
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder().setLabel('Support Discord').setURL(discord.supportInvite).setStyle(ButtonStyle.Link)
+    );
     if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({ embeds: [errorEmbed], rows: [row], ephemeral: true });
+      await interaction.followUp({ embeds: [errorEmbed], components: [row], ephemeral: true });
     } else {
-      await interaction.reply({ embeds: [errorEmbed], rows: [row], ephemeral: true });
+      await interaction.reply({ embeds: [errorEmbed], components: [row], ephemeral: true });
     }
   }
 };

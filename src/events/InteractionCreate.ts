@@ -1,14 +1,16 @@
 import {
   PermissionFlagsBits,
-  CommandInteraction,
   ActionRowBuilder,
   ColorResolvable,
   ButtonBuilder,
   EmbedBuilder,
   ButtonStyle,
   ChannelType,
-  BaseClient,
+  GuildMember,
+  TextChannel,
+  Interaction,
   Events,
+  Guild,
 } from 'discord.js';
 import {
   isTicketBlacklisted,
@@ -18,31 +20,63 @@ import {
   writeAt,
   toFixed,
 } from '../functions/helper.js';
-import { eventMessage, errorMessage } from '../functions/logger.js';
+import { eventMessage, errorMessage } from '../functions/logger';
 import { other, discord, api } from '../../config.json';
 import { readFileSync } from 'fs';
 
 export const name = Events.InteractionCreate;
 
-export const execute = async (interaction: ChatInputCommandInteraction) => {
+export const execute = async (interaction: Interaction) => {
   try {
+    const memberRoles = (interaction.member as GuildMember).roles.cache.map((role) => role.id);
     if (interaction.isChatInputCommand()) {
       const command = interaction.client.commands.get(interaction.commandName);
       if (!command) return;
       try {
         try {
-          let commandString = await interaction.commandName;
+          let commandString = interaction.commandName;
           if (interaction.options) {
-            if (interaction.options._group) {
-              commandString += ` ${await interaction.options.getSubcommandGroup()}`;
-            }
-            if (interaction.options._subcommand) {
-              commandString += ` ${await interaction.options.getSubcommand()}`;
-            }
-            for (const option of interaction.options._hoistedOptions) {
-              if (option.value && option.name) {
-                commandString += ` ${option.name}: ${option.value}`;
+            for (const option of interaction.options.data) {
+              commandString += ` ${option.name}`;
+              commandString += ` ${option.type}`;
+              commandString += `${option.autocomplete ? option.autocomplete : ''}`;
+              commandString += `${option.value ? option.value : ''}`;
+              if (option.options) {
+                for (const subOption of option.options) {
+                  commandString += ` ${subOption.name}`;
+                  commandString += ` ${subOption.type}`;
+                  commandString += ` ${subOption.autocomplete ? subOption.autocomplete : ''}`;
+                  commandString += ` ${subOption.value ? subOption.value : ''}`;
+                  if (subOption.options) {
+                    for (const subSubOption of subOption.options) {
+                      commandString += ` ${subSubOption.name}`;
+                      commandString += ` ${subSubOption.type}`;
+                      commandString += ` ${subSubOption.autocomplete ? subSubOption.autocomplete : ''}`;
+                      commandString += ` ${subSubOption.value ? subSubOption.value : ''}`;
+                      commandString += ` ${subSubOption.user ? subSubOption.user : ''}`;
+                      commandString += ` ${subSubOption.member ? subSubOption.member : ''}`;
+                      commandString += ` ${subSubOption.channel ? subSubOption.channel : ''}`;
+                      commandString += ` ${subSubOption.role ? subSubOption.role : ''}`;
+                      commandString += ` ${subSubOption.attachment ? subSubOption.attachment : ''}`;
+                    }
+                    commandString += ` ${subOption.user ? subOption.user : ''}`;
+                    commandString += ` ${subOption.member ? subOption.member : ''}`;
+                    commandString += ` ${subOption.channel ? subOption.channel : ''}`;
+                    commandString += ` ${subOption.role ? subOption.role : ''}`;
+                    commandString += ` ${subOption.attachment ? subOption.attachment : ''}`;
+                  }
+                  commandString += ` ${subOption.user ? subOption.user : ''}`;
+                  commandString += ` ${subOption.member ? subOption.member : ''}`;
+                  commandString += ` ${subOption.channel ? subOption.channel : ''}`;
+                  commandString += ` ${subOption.role ? subOption.role : ''}`;
+                  commandString += ` ${subOption.attachment ? subOption.attachment : ''}`;
+                }
               }
+              commandString += ` ${option.user ? option.user : ''}`;
+              commandString += ` ${option.member ? option.member : ''}`;
+              commandString += ` ${option.channel ? option.channel : ''}`;
+              commandString += ` ${option.role ? option.role : ''}`;
+              commandString += ` ${option.attachment ? option.attachment : ''}`;
             }
           }
           eventMessage(
@@ -50,24 +84,25 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
               interaction.user.discriminator == '0'
                 ? interaction.user.username
                 : `${interaction.user.username}#${interaction.user.discriminator}`
-            } (${interaction.user.id}) ran command ${commandString} in ${interaction.guild.id} in ${
-              interaction.channel.id
+            } (${interaction.user.id}) ran command ${commandString} in ${(interaction.guild as Guild).id} in ${
+              (interaction.channel as TextChannel).id
             }`
           );
-        } catch (error) {
+        } catch (error: any) {
           const errorIdLogger = generateID(other.errorIdLength);
           errorMessage(`Error ID: ${errorIdLogger}`);
           errorMessage(error);
         }
-        if (
-          other.devMode &&
-          !(await interaction.guild.members.fetch(interaction.user)).roles.cache.has(discord.roles.dev)
-        ) {
-          throw new Error('No Perms');
+
+        if (other.devMode) {
+          if (!memberRoles.some((role) => ([discord.roles.dev] as string[]).includes(role))) {
+            throw new Error('You do not have permission to use this command');
+          }
         }
+
         try {
-          if (!discord.channels.noCommandTracking.includes(interaction.channel.id)) {
-            const userData = JSON.parse(readFileSync('data/userData.json'));
+          if (!discord.channels.noCommandTracking.includes((interaction.channel as TextChannel).id)) {
+            const userData = JSON.parse(readFileSync('data/userData.json') as any);
             let data;
             if (userData[interaction.user.id]) {
               data = {
@@ -93,7 +128,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
               await writeAt('data/userData.json', interaction.user.id, data);
             }
           }
-        } catch (error) {
+        } catch (error: any) {
           const errorIdLogUserData = generateID(other.errorIdLength);
           errorMessage(`Error ID: ${errorIdLogUserData}`);
           errorMessage(error);
@@ -111,7 +146,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
             return await interaction.reply({ embeds: [blacklisted], ephemeral: true });
           }
           await command.execute(interaction);
-        } catch (error) {
+        } catch (error: any) {
           const errorIdBlacklistCheck = generateID(other.errorIdLength);
           errorMessage(`Error ID: ${errorIdBlacklistCheck}`);
           errorMessage(error);
@@ -127,18 +162,16 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
               text: `by @kathund | ${discord.supportInvite} for support`,
               iconURL: other.logo,
             });
-          const supportDisc = new ButtonBuilder()
-            .setLabel('Support Discord')
-            .setURL(discord.supportInvite)
-            .setStyle(ButtonStyle.Link);
-          const row = new ActionRowBuilder().addComponents(supportDisc);
+          const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder().setLabel('Support Discord').setURL(discord.supportInvite).setStyle(ButtonStyle.Link)
+          );
           if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ embeds: [errorEmbed], rows: [row], ephemeral: true });
+            await interaction.followUp({ embeds: [errorEmbed], components: [row], ephemeral: true });
           } else {
-            await interaction.reply({ embeds: [errorEmbed], rows: [row], ephemeral: true });
+            await interaction.reply({ embeds: [errorEmbed], components: [row], ephemeral: true });
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         const errorIdCheck = generateID(other.errorIdLength);
         errorMessage(`Error ID: ${errorIdCheck}`);
         errorMessage(error);
@@ -154,15 +187,13 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
             text: `by @kathund | ${discord.supportInvite} for support`,
             iconURL: other.logo,
           });
-        const supportDisc = new ButtonBuilder()
-          .setLabel('Support Discord')
-          .setURL(discord.supportInvite)
-          .setStyle(ButtonStyle.Link);
-        const row = new ActionRowBuilder().addComponents(supportDisc);
+        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+          new ButtonBuilder().setLabel('Support Discord').setURL(discord.supportInvite).setStyle(ButtonStyle.Link)
+        );
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ embeds: [errorEmbed], rows: [row], ephemeral: true });
+          await interaction.followUp({ embeds: [errorEmbed], components: [row], ephemeral: true });
         } else {
-          await interaction.reply({ embeds: [errorEmbed], rows: [row], ephemeral: true });
+          await interaction.reply({ embeds: [errorEmbed], components: [row], ephemeral: true });
         }
       }
     } else if (interaction.isButton()) {
@@ -172,16 +203,16 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
             interaction.user.discriminator == '0'
               ? interaction.user.username
               : `${interaction.user.username}#${interaction.user.discriminator}`
-          } (${interaction.user.id}) clicked button ${interaction.customId} in ${interaction.guild.id} in ${
-            interaction.channel.id
+          } (${interaction.user.id}) clicked button ${interaction.customId} in ${(interaction.guild as Guild).id} in ${
+            (interaction.channel as TextChannel).id
           } at ${interaction.message.id}`
         );
-        const tickets = JSON.parse(readFileSync('data/tickets.json'));
+        const tickets = JSON.parse(readFileSync('data/tickets.json') as any);
         if (interaction.customId === 'TICKET_OPEN') {
           await interaction.deferReply({ ephemeral: true });
           const reason = 'No reason provided';
-          const ticketId = generateID(other.ticketIdLength).toLowerCase();
-          const channel = await interaction.guild.channels.create({
+          const ticketId = (generateID(other.ticketIdLength) as string).toLowerCase();
+          const channel = await (interaction.guild as Guild).channels.create({
             name: `ticket-${interaction.user.username}-${ticketId}`,
             type: ChannelType.GuildText,
             permissionOverwrites: [
@@ -198,7 +229,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
                 ],
               },
               {
-                id: interaction.guild.roles.everyone.id,
+                id: (interaction.guild as Guild).roles.everyone.id,
                 deny: [
                   PermissionFlagsBits.ReadMessageHistory,
                   PermissionFlagsBits.UseExternalEmojis,
@@ -274,17 +305,16 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
               iconURL: other.logo,
             });
 
-          const ticketCloseButton = new ButtonBuilder()
-            .setLabel('Close Ticket')
-            .setCustomId(`TICKET_CLOSE_${channel.id}_${interaction.user.id}_${ticketId}`)
-            .setStyle(ButtonStyle.Danger);
-
-          const ticketCloseAndBan = new ButtonBuilder()
-            .setLabel('Close Ticket and Ban User')
-            .setCustomId(`TICKET_BAN_CLOSE_${channel.id}_${interaction.user.id}_${ticketId}`)
-            .setStyle(ButtonStyle.Danger);
-
-          const row = new ActionRowBuilder().addComponents(ticketCloseButton, ticketCloseAndBan);
+          const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+              .setLabel('Close Ticket')
+              .setCustomId(`TICKET_CLOSE_${channel.id}_${interaction.user.id}_${ticketId}`)
+              .setStyle(ButtonStyle.Danger),
+            new ButtonBuilder()
+              .setLabel('Close Ticket and Ban User')
+              .setCustomId(`TICKET_BAN_CLOSE_${channel.id}_${interaction.user.id}_${ticketId}`)
+              .setStyle(ButtonStyle.Danger)
+          );
 
           await channel.send({ content: `<@${interaction.user.id}>`, embeds: [ticketEmbed], components: [row] });
           await channel.send({ content: `<@&${discord.roles.mod}>` });
@@ -301,17 +331,21 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
           await interaction.followUp({ embeds: [ticketOpenedEmbed], ephemeral: true });
         } else if (interaction.customId.includes('TICKET_CLOSE_')) {
           const channelId = interaction.customId.split('_')[2];
-          let hasPerms = false;
-          if (interaction.channel.id !== channelId) return;
-          if (interaction.member.roles.cache.has(discord.roles.dev)) hasPerms = true;
-          if (interaction.member.roles.cache.has(discord.roles.admin)) hasPerms = true;
-          if (interaction.member.roles.cache.has(discord.roles.mod)) hasPerms = true;
-          if (!hasPerms) throw new Error('You do not have permission to use this command');
+          if ((interaction.channel as TextChannel).id !== channelId) return;
+          if (
+            !memberRoles.some((role) =>
+              ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role)
+            )
+          ) {
+            throw new Error('You do not have permission to use this command');
+          }
           const reason = 'No reason provided';
-          if (!interaction.channel.name.includes('ticket-')) throw new Error('This is not a ticket channel');
+          if (!(interaction.channel as TextChannel).name.includes('ticket-')) {
+            throw new Error('This is not a ticket channel');
+          }
           const ticketId = interaction.customId.split('_')[4];
           const ticket = tickets[ticketId];
-          const messages = await interaction.channel.messages.fetch();
+          const messages = await (interaction.channel as TextChannel).messages.fetch();
           let changed = [];
           messages.forEach((message) => {
             changed.push({
@@ -425,22 +459,28 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
               text: `by @kathund | ${discord.supportInvite} for support`,
               iconURL: other.logo,
             });
-          const loggingChannel = interaction.guild.channels.cache.get(discord.channels.ticketLogging);
+          const loggingChannel = (interaction.guild as Guild).channels.cache.get(
+            discord.channels.ticketLogging
+          ) as TextChannel;
           if (!loggingChannel) throw new Error('Ticket logging channel not found? Please report this!');
           await loggingChannel.send({ embeds: [closedLoggingEmbed] });
           await interaction.client.users.send(ticket.user, { embeds: [userCloseEmbed] });
-          await interaction.channel.delete();
+          await (interaction.channel as TextChannel).delete();
         } else if (interaction.customId.includes('TICKET_BAN_CLOSE_')) {
           const channelId = interaction.customId.split('_')[3];
           const userId = interaction.customId.split('_')[4];
-          let hasPerms = false;
-          if (interaction.channel.id !== channelId) return;
-          if (interaction.member.roles.cache.has(discord.roles.dev)) hasPerms = true;
-          if (interaction.member.roles.cache.has(discord.roles.admin)) hasPerms = true;
-          if (interaction.member.roles.cache.has(discord.roles.mod)) hasPerms = true;
-          if (!hasPerms) throw new Error('You do not have permission to use this command');
+          if ((interaction.channel as TextChannel).id !== channelId) return;
+          if (
+            !memberRoles.some((role) =>
+              ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role)
+            )
+          ) {
+            throw new Error('You do not have permission to use this command');
+          }
           const reason = 'No reason provided';
-          if (!interaction.channel.name.includes('ticket-')) throw new Error('This is not a ticket channel');
+          if (!(interaction.channel as TextChannel).name.includes('ticket-')) {
+            throw new Error('This is not a ticket channel');
+          }
           const ticketBlacklist = tickets.blacklist;
           if (isTicketBlacklisted(userId, ticketBlacklist)) {
             throw new Error('User already blacklisted from tickets');
@@ -467,7 +507,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
           const ticketId = interaction.customId.split('_')[5];
           const ticket = tickets[ticketId];
           if (!ticket) throw new Error('Ticket not found? Please report this!');
-          const messages = await interaction.channel.messages.fetch();
+          const messages = await (interaction.channel as TextChannel).messages.fetch();
           let changed = [];
           messages.forEach((message) => {
             changed.push({
@@ -580,13 +620,15 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
               text: `by @kathund | ${discord.supportInvite} for support`,
               iconURL: other.logo,
             });
-          const loggingChannel = interaction.guild.channels.cache.get(discord.channels.ticketLogging);
+          const loggingChannel = (interaction.guild as Guild).channels.cache.get(
+            discord.channels.ticketLogging
+          ) as TextChannel;
           if (!loggingChannel) throw new Error('Ticket logging channel not found? Please report this!');
           await loggingChannel.send({ embeds: [closedLoggingEmbed] });
           await interaction.client.users.send(ticket.user, { embeds: [userCloseEmbed] });
-          await interaction.channel.delete();
+          await (interaction.channel as TextChannel).delete();
         }
-      } catch (error) {
+      } catch (error: any) {
         if (String(error).includes('NO_ERROR_ID_')) {
           errorMessage(error);
           const errorEmbed = new EmbedBuilder()
@@ -597,16 +639,14 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
               text: `by @kathund | ${discord.supportInvite} for support`,
               iconURL: other.logo,
             });
-          const supportDisc = new ButtonBuilder()
-            .setLabel('Support Discord')
-            .setURL(discord.supportInvite)
-            .setStyle(ButtonStyle.Link);
-          const row = new ActionRowBuilder().addComponents(supportDisc);
-          await interaction.reply({ embeds: [errorEmbed], rows: [row] });
+          const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder().setLabel('Support Discord').setURL(discord.supportInvite).setStyle(ButtonStyle.Link)
+          );
+          await interaction.reply({ embeds: [errorEmbed], components: [row] });
           if (interaction.replied || interaction.deferred) {
-            return await interaction.followUp({ embeds: [errorEmbed], rows: [row], ephemeral: true });
+            return await interaction.followUp({ embeds: [errorEmbed], components: [row], ephemeral: true });
           } else {
-            return await interaction.reply({ embeds: [errorEmbed], rows: [row], ephemeral: true });
+            return await interaction.reply({ embeds: [errorEmbed], components: [row], ephemeral: true });
           }
         } else {
           const errorIdButtons = generateID(other.errorIdLength);
@@ -624,20 +664,18 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
               text: `by @kathund | ${discord.supportInvite} for support`,
               iconURL: other.logo,
             });
-          const supportDisc = new ButtonBuilder()
-            .setLabel('Support Discord')
-            .setURL(discord.supportInvite)
-            .setStyle(ButtonStyle.Link);
-          const row = new ActionRowBuilder().addComponents(supportDisc);
+          const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder().setLabel('Support Discord').setURL(discord.supportInvite).setStyle(ButtonStyle.Link)
+          );
           if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ embeds: [errorEmbed], rows: [row], ephemeral: true });
+            await interaction.followUp({ embeds: [errorEmbed], components: [row], ephemeral: true });
           } else {
-            await interaction.reply({ embeds: [errorEmbed], rows: [row], ephemeral: true });
+            await interaction.reply({ embeds: [errorEmbed], components: [row], ephemeral: true });
           }
         }
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     const errorId = generateID(other.errorIdLength);
     errorMessage(`Error Id - ${errorId}`);
     errorMessage(error);

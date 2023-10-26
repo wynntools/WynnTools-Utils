@@ -15,7 +15,7 @@ export const generateID = (length: number) => {
       result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return result;
-  } catch (error) {
+  } catch (error: any) {
     errorMessage(error);
   }
 };
@@ -32,7 +32,7 @@ export const getCurrentTime = () => {
         timeZone: other.timezone,
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     const errorId = generateID(other.errorIdLength);
     errorMessage(`Error Id - ${errorId}`);
     errorMessage(error);
@@ -46,7 +46,7 @@ export const writeAt = async (filePath: string, jsonPath: string, value: any) =>
     const json = await readJson(filePath);
     set(json, jsonPath, value);
     return await writeJson(filePath, json);
-  } catch (error) {
+  } catch (error: any) {
     errorMessage(error);
     const json_1 = {};
     set(json_1, jsonPath, value);
@@ -62,7 +62,7 @@ export const blacklistCheck = async (id: string) => {
     } else {
       return false;
     }
-  } catch (error) {
+  } catch (error: any) {
     const errorId = generateID(other.errorIdLength);
     errorMessage(`Error Id - ${errorId}`);
     errorMessage(error);
@@ -84,7 +84,7 @@ export const toFixed = (num: any, fixed: number) => {
     }
 
     return parts.join('.');
-  } catch (error) {
+  } catch (error: any) {
     const errorId = generateID(other.errorIdLength);
     errorMessage(`Error Id - ${errorId}`);
     errorMessage(error);
@@ -144,7 +144,7 @@ export const removeFromArray = (array: any, id: string) => {
       array.splice(index, 1);
       return array;
     }
-  } catch (error) {
+  } catch (error: any) {
     errorMessage(error);
     return error;
   }

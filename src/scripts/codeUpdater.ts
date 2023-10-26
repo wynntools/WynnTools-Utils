@@ -1,5 +1,5 @@
 // Credits https://github.com/DuckySoLucky/hypixel-discord-chat-bridge/blob/f8a8a8e1e1c469127b8fcd03e6553b43f22b8250/src/Updater.js (Edited)
-import { updateMessage, scriptMessage, errorMessage, otherMessage } from '../functions/logger.js';
+import { updateMessage, scriptMessage, errorMessage, otherMessage } from '../functions/logger';
 import { exec } from 'child_process';
 import { schedule } from 'node-cron';
 

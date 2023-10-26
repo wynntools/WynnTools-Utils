@@ -1,12 +1,10 @@
 // Credits https://github.com/DuckySoLucky/hypixel-discord-chat-bridge/blob/f8a8a8e1e1c469127b8fcd03e6553b43f22b8250/src/Logger.js (Edited)
-const customLevels = { cache: 0, event: 1, discord: 2, error: 3, script: 4, warn: 5, other: 6, max: 7 };
-import { createLogger, format as _format, transports as _transports } from 'winston';
-import { other as _other } from '../../config.json';
-import { join } from 'path';
+const customLevels = { cache: 0, event: 1, error: 2, script: 3, warn: 4, other: 5, max: 6 };
+import { createLogger, format, transports } from 'winston';
+import { other } from '../../config.json';
 
-const logDirectory = join(__dirname, '../../logs');
 const timezone = () => {
-  if (_other.timezone === null) {
+  if (other.timezone === null) {
     return new Date().toLocaleString('en-US', {
       year: 'numeric',
       month: 'numeric',
@@ -25,155 +23,140 @@ const timezone = () => {
       minute: 'numeric',
       second: 'numeric',
       hour12: false,
-      timeZone: _other.timezone,
+      timeZone: other.timezone,
     });
   }
 };
 
-// TODO Add logs flushing for logs older then 14d
-// TODO Add cli-color support
+const cacheTransport = new transports.File({
+  level: 'cache',
+  filename: './logs/cache.log',
+});
+
+const eventTransport = new transports.File({
+  level: 'event',
+  filename: './logs/event.log',
+});
+
+const errorTransport = new transports.File({
+  level: 'error',
+  filename: './logs/error.log',
+});
+
+const scriptTransport = new transports.File({
+  level: 'script',
+  filename: './logs/script.log',
+});
+
+const warnTransport = new transports.File({
+  level: 'warn',
+  filename: './logs/warn.log',
+});
+
+const otherTransport = new transports.File({
+  level: 'other',
+  filename: './logs/other.log',
+});
+
+const combinedTransport = new transports.File({
+  level: 'max',
+  filename: './logs/combined.log',
+});
+
+const consoleTransport = new transports.Console({
+  level: 'max',
+});
 
 const cacheLogger = createLogger({
   level: 'cache',
   levels: customLevels,
-  format: _format.combine(
-    _format.timestamp({ format: timezone }),
-    _format.printf(({ timestamp, level, message }) => {
+  format: format.combine(
+    format.timestamp({ format: timezone }),
+    format.printf(({ timestamp, level, message }) => {
       return `[${timestamp}] ${level.toUpperCase()} > ${message}`;
     })
   ),
-  transports: [
-    new _transports.File({ name: 'cache', filename: join(logDirectory, 'cache.log'), level: 'cache' }),
-    new _transports.File({ name: 'combined', filename: join(logDirectory, 'combined.log'), level: 'max' }),
-    new _transports.Console({ levels: 'max' }),
-  ],
+  transports: [cacheTransport, combinedTransport, consoleTransport],
 });
 
 const eventLogger = createLogger({
   level: 'event',
   levels: customLevels,
-  format: _format.combine(
-    _format.timestamp({ format: timezone }),
-    _format.printf(({ timestamp, level, message }) => {
+  format: format.combine(
+    format.timestamp({ format: timezone }),
+    format.printf(({ timestamp, level, message }) => {
       return `[${timestamp}] ${level.toUpperCase()} > ${message}`;
     })
   ),
-  transports: [
-    new _transports.File({
-      name: 'event',
-      filename: join(logDirectory, 'event.log'),
-      level: 'event',
-    }),
-    new _transports.File({ name: 'combined', filename: join(logDirectory, 'combined.log'), level: 'max' }),
-    new _transports.Console({ levels: 'max' }),
-  ],
-});
-
-const discordLogger = createLogger({
-  level: 'discord',
-  levels: customLevels,
-  format: _format.combine(
-    _format.timestamp({ format: timezone }),
-    _format.printf(({ timestamp, level, message }) => {
-      return `[${timestamp}] ${level.toUpperCase()} > ${message}`;
-    })
-  ),
-  transports: [
-    new _transports.File({
-      name: 'discord',
-      filename: join(logDirectory, 'discord.log'),
-      level: 'discord',
-    }),
-    new _transports.File({ name: 'combined', filename: join(logDirectory, 'combined.log'), level: 'max' }),
-    new _transports.Console({ levels: 'max' }),
-  ],
+  transports: [eventTransport, combinedTransport, consoleTransport],
 });
 
 const errorLogger = createLogger({
   level: 'error',
   levels: customLevels,
-  format: _format.combine(
-    _format.timestamp({ format: timezone }),
-    _format.printf(({ timestamp, level, message }) => {
+  format: format.combine(
+    format.timestamp({ format: timezone }),
+    format.printf(({ timestamp, level, message }) => {
       return `[${timestamp}] ${level.toUpperCase()} > ${message}`;
     })
   ),
-  transports: [
-    new _transports.File({ name: 'error', filename: join(logDirectory, 'error.log'), level: 'error' }),
-    new _transports.File({ name: 'combined', filename: join(logDirectory, 'combined.log'), level: 'max' }),
-    new _transports.Console({ levels: 'max' }),
-  ],
+  transports: [errorTransport, combinedTransport, consoleTransport],
 });
 
 const scriptLogger = createLogger({
   level: 'script',
   levels: customLevels,
-  format: _format.combine(
-    _format.timestamp({ format: timezone }),
-    _format.printf(({ timestamp, level, message }) => {
+  format: format.combine(
+    format.timestamp({ format: timezone }),
+    format.printf(({ timestamp, level, message }) => {
       return `[${timestamp}] ${level.toUpperCase()} > ${message}`;
     })
   ),
-  transports: [
-    new _transports.File({ name: 'script', filename: join(logDirectory, 'script.log'), level: 'script' }),
-    new _transports.File({ name: 'combined', filename: join(logDirectory, 'combined.log'), level: 'max' }),
-    new _transports.Console({ levels: 'max' }),
-  ],
+  transports: [scriptTransport, combinedTransport, consoleTransport],
 });
 
 const warnLogger = createLogger({
   level: 'warn',
   levels: customLevels,
-  format: _format.combine(
-    _format.timestamp({ format: timezone }),
-    _format.printf(({ timestamp, level, message }) => {
+  format: format.combine(
+    format.timestamp({ format: timezone }),
+    format.printf(({ timestamp, level, message }) => {
       return `[${timestamp}] ${level.toUpperCase()} > ${message}`;
     })
   ),
-  transports: [
-    new _transports.File({ name: 'warn', filename: join(logDirectory, 'warn.log'), level: 'warn' }),
-    new _transports.File({ name: 'combined', filename: join(logDirectory, 'combined.log'), level: 'max' }),
-    new _transports.Console({ levels: 'max' }),
-  ],
+  transports: [warnTransport, combinedTransport, consoleTransport],
 });
 
 const otherLogger = createLogger({
   level: 'other',
   levels: customLevels,
-  format: _format.combine(
-    _format.timestamp({ format: timezone }),
-    _format.printf(({ timestamp, level, message }) => {
+  format: format.combine(
+    format.timestamp({ format: timezone }),
+    format.printf(({ timestamp, level, message }) => {
       return `[${timestamp}] ${level.toUpperCase()} > ${message}`;
     })
   ),
-  transports: [
-    new _transports.File({ name: 'other', filename: join(logDirectory, 'other.log'), level: 'other' }),
-    new _transports.File({ name: 'combined', filename: join(logDirectory, 'combined.log'), level: 'max' }),
-    new _transports.Console({ levels: 'max' }),
-  ],
+  transports: [otherTransport, combinedTransport, consoleTransport],
 });
 
 const logger = {
-  cache: (...args) => {
-    return cacheLogger.cache(args.join(' > '));
+  cache: (cache: string, message: string) => {
+    cacheLogger.log('cache', `${cache} | ${message}`);
   },
-  event: (params) => {
-    return eventLogger.event(params);
+  event: (message: string) => {
+    eventLogger.log('event', message);
   },
-  discord: (params) => {
-    return discordLogger.discord(params);
+  error: (message: string) => {
+    errorLogger.log('error', message);
   },
-  error: (params) => {
-    return errorLogger.error(params);
+  script: (message: string) => {
+    scriptLogger.log('script', message);
   },
-  script: (params) => {
-    return scriptLogger.script(params);
+  warn: (message: string) => {
+    warnLogger.log('warn', message);
   },
-  warn: (params) => {
-    return warnLogger.warn(params);
-  },
-  other: (params) => {
-    return otherLogger.other(params);
+  other: (message: string) => {
+    otherLogger.log('other', message);
   },
 };
 
@@ -187,10 +170,9 @@ export const updateMessage = () => {
   console.log(padding + warning + padding + '\n' + padding2 + message2 + padding2);
 };
 
-export const discordMessage = logger.discord;
+export const cacheMessage = logger.cache;
 export const eventMessage = logger.event;
-export const warnMessage = logger.warn;
 export const errorMessage = logger.error;
 export const scriptMessage = logger.script;
-export const cacheMessage = logger.cache;
+export const warnMessage = logger.warn;
 export const otherMessage = logger.other;

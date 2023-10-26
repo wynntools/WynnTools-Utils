@@ -7,10 +7,10 @@ import {
   EmbedBuilder,
   ButtonStyle,
 } from 'discord.js';
-import { generateID, cleanMessage } from '../../functions/helper.js';
-import { errorMessage } from '../../functions/logger.js';
-import { discord, other } from '../../../config.json';
-import { version } from '../../../package.json';
+import { generateID, cleanMessage } from '../functions/helper';
+import { errorMessage } from '../functions/logger';
+import { discord, other } from '../../config.json';
+import { version } from '../../package.json';
 
 export const data = new SlashCommandBuilder()
   .setName('about')
@@ -19,13 +19,11 @@ export const data = new SlashCommandBuilder()
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
   try {
-    const support = new ButtonBuilder().setLabel('support').setURL(discord.supportInvite).setStyle(ButtonStyle.Link);
-    const invite = new ButtonBuilder().setLabel('invite').setURL(discord.botInvite).setStyle(ButtonStyle.Link);
-    const source = new ButtonBuilder()
-      .setLabel('source')
-      .setURL('https://github.com/Kathund/WynnTools')
-      .setStyle(ButtonStyle.Link);
-    const row = new ActionRowBuilder().addComponents(support, invite, source) as any;
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder().setLabel('source').setURL('https://github.com/Kathund/WynnTools').setStyle(ButtonStyle.Link),
+      new ButtonBuilder().setLabel('support').setURL(discord.supportInvite).setStyle(ButtonStyle.Link),
+      new ButtonBuilder().setLabel('invite').setURL(discord.botInvite).setStyle(ButtonStyle.Link)
+    );
     const embed = new EmbedBuilder()
       .setTitle(`WynnTools Utils Stats`)
       .setColor(other.colors.green.hex as ColorResolvable)
@@ -35,7 +33,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       )
       .addFields({
         name: 'General',
-        value: `<:Dev:1130772126769631272> Developer - \`@kathund\`\n<:bullet:1064700156789927936> Version \`${version}\`\nUptime - <t:${global.uptime}:R>`,
+        value: `<:Dev:1130772126769631272> Developer - \`@kathund\`\n<:bullet:1064700156789927936> Version \`${version}\`\nUptime - <t:${version}:R>`,
         inline: true,
       })
       .setFooter({
@@ -43,7 +41,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         iconURL: other.logo,
       });
     await interaction.reply({ embeds: [embed], components: [row] });
-  } catch (error) {
+  } catch (error: any) {
     const errorId = generateID(other.errorIdLength);
     errorMessage(`Error Id - ${errorId}`);
     errorMessage(error);
@@ -56,11 +54,9 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         }> to report it\nError id - ${errorId}\nError Info - \`${cleanMessage(error)}\``
       )
       .setFooter({ text: `by @kathund | ${discord.supportInvite} for support`, iconURL: other.logo });
-    const supportDisc = new ButtonBuilder()
-      .setLabel('Support Discord')
-      .setURL(discord.supportInvite)
-      .setStyle(ButtonStyle.Link);
-    const row = new ActionRowBuilder().addComponents(supportDisc);
-    await interaction.reply({ embeds: [errorEmbed], rows: [row] });
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder().setLabel('Support Discord').setURL(discord.supportInvite).setStyle(ButtonStyle.Link)
+    );
+    await interaction.reply({ embeds: [errorEmbed], components: [row] });
   }
 };
