@@ -15,7 +15,7 @@ import {
 import { isTicketBlacklisted, removeFromArray, cleanMessage, generateID, toFixed, writeAt } from '../functions/helper';
 import { other, discord, api } from '../../config.json';
 import { errorMessage } from '../functions/logger';
-import { arrayMessages } from '../types/types';
+import { arrayMessages } from '../types/main';
 import { readFileSync } from 'fs';
 import fetch from 'node-fetch';
 
@@ -182,9 +182,9 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       await channel.send({ content: `<@&${discord.roles.mod}>` });
       const ticketChannelMessages = await channel.messages.fetch();
       ticketChannelMessages.forEach(async (message) => {
-        if (!message.author.id === interaction.client.user.id) return;
-        if (message.content === `<@&${discord.roles.mod}>`) return await message.delete();
-        if (message.content === `<@${interaction.user.id}>`) return await message.pin();
+        if (message.author.id !== interaction.client.user.id) return;
+        if (message.content === `<@&${discord.roles.mod}>`) await message.delete();
+        if (message.content === `<@${interaction.user.id}>`) await message.pin();
       });
       const ticketOpenedEmbed = new EmbedBuilder()
         .setColor(other.colors.red.hex as ColorResolvable)

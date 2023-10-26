@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.ts",
+  "types": "src/types/main.d.ts",
   "scripts": {
     "start": "npx ts-node index.ts",
     "lint:check": "npx eslint src/ index.ts",

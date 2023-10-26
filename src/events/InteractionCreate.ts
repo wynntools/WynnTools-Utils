@@ -22,7 +22,7 @@ import {
 } from '../functions/helper.js';
 import { eventMessage, errorMessage } from '../functions/logger';
 import { other, discord, api } from '../../config.json';
-import { arrayMessages } from '../types/types';
+import { arrayMessages } from '../types/main.js';
 import { readFileSync } from 'fs';
 
 export const name = Events.InteractionCreate;
@@ -321,7 +321,7 @@ export const execute = async (interaction: Interaction) => {
           await channel.send({ content: `<@&${discord.roles.mod}>` });
           const ticketChannelMessages = await channel.messages.fetch();
           ticketChannelMessages.forEach(async (message) => {
-            if (!message.author.id === interaction.client.user.id) return;
+            if (message.author.id !== interaction.client.user.id) return;
             if (message.content === `<@&${discord.roles.mod}>`) return await message.delete();
             if (message.content === `<@${interaction.user.id}>`) return await message.pin();
           });
