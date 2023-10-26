@@ -15,6 +15,7 @@ import {
 import { isTicketBlacklisted, removeFromArray, cleanMessage, generateID, toFixed, writeAt } from '../functions/helper';
 import { other, discord, api } from '../../config.json';
 import { errorMessage } from '../functions/logger';
+import { arrayMessages } from '../types/types';
 import { readFileSync } from 'fs';
 import fetch from 'node-fetch';
 
@@ -205,14 +206,14 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       const ticketId = (interaction.channel as TextChannel).name.split('-')[2];
       const ticket = tickets[ticketId];
       const messages = await (interaction.channel as TextChannel).messages.fetch();
-      let changed = [];
+      let changed = Array<arrayMessages>();
       messages.forEach((message) => {
         changed.push({
           timestamp: message.createdTimestamp,
           content: message.content,
           user: message.author.id,
           username: message.author.username,
-          avatar: message.author.avatar,
+          avatar: message.author.avatar || null,
           bot: message.author.bot,
           displayName: message.author.displayName,
         });

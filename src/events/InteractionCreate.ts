@@ -22,6 +22,7 @@ import {
 } from '../functions/helper.js';
 import { eventMessage, errorMessage } from '../functions/logger';
 import { other, discord, api } from '../../config.json';
+import { arrayMessages } from '../types/types';
 import { readFileSync } from 'fs';
 
 export const name = Events.InteractionCreate;
@@ -346,13 +347,16 @@ export const execute = async (interaction: Interaction) => {
           const ticketId = interaction.customId.split('_')[4];
           const ticket = tickets[ticketId];
           const messages = await (interaction.channel as TextChannel).messages.fetch();
-          let changed = [];
+          let changed = Array<arrayMessages>();
           messages.forEach((message) => {
             changed.push({
               timestamp: message.createdTimestamp,
               content: message.content,
               user: message.author.id,
               username: message.author.username,
+              avatar: message.author.avatar || null,
+              bot: message.author.bot,
+              displayName: message.author.displayName,
             });
           });
           changed = changed.sort((a, b) => a.timestamp - b.timestamp);
@@ -508,13 +512,16 @@ export const execute = async (interaction: Interaction) => {
           const ticket = tickets[ticketId];
           if (!ticket) throw new Error('Ticket not found? Please report this!');
           const messages = await (interaction.channel as TextChannel).messages.fetch();
-          let changed = [];
+          let changed = Array<arrayMessages>();
           messages.forEach((message) => {
             changed.push({
               timestamp: message.createdTimestamp,
               content: message.content,
               user: message.author.id,
               username: message.author.username,
+              avatar: message.author.avatar || null,
+              bot: message.author.bot,
+              displayName: message.author.displayName,
             });
           });
           changed = changed.sort((a, b) => a.timestamp - b.timestamp);
