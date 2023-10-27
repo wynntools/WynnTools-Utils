@@ -398,7 +398,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       }
       const ticketId = (interaction.channel as TextChannel).name.split('-')[2];
       const ticket = tickets[ticketId];
-      const ticketUser = await (interaction.guild as Guild).members.fetch(ticket.user);
+      const ticketUser = (await (interaction.guild as Guild).members.fetch(ticket.user)) as GuildMember;
       await (interaction.channel as TextChannel).edit({
         name: ticket.channelName,
         type: ChannelType.GuildText,

@@ -324,7 +324,7 @@ export const execute = async (interaction: Interaction) => {
             .setTitle('Ticket Opened')
             .setDescription(`Your ticket has been opened in <#${channel.id}>`);
           await interaction.followUp({ embeds: [ticketOpenedEmbed], ephemeral: true });
-        } else if (interaction.customId.includes('TICKET_CLOSE_')) {
+        } else if (interaction.customId.startsWith('TICKET_CLOSE_')) {
           const channelId = interaction.customId.split('_')[2];
           if ((interaction.channel as TextChannel).id !== channelId) return;
           if (
@@ -462,7 +462,7 @@ export const execute = async (interaction: Interaction) => {
           await loggingChannel.send({ embeds: [closedLoggingEmbed] });
           await interaction.client.users.send(ticket.user, { embeds: [userCloseEmbed] });
           await (interaction.channel as TextChannel).delete();
-        } else if (interaction.customId.includes('TICKET_BAN_CLOSE_')) {
+        } else if (interaction.customId.startsWith('TICKET_BAN_CLOSE_')) {
           const channelId = interaction.customId.split('_')[3];
           const userId = interaction.customId.split('_')[4];
           if ((interaction.channel as TextChannel).id !== channelId) return;
@@ -624,6 +624,135 @@ export const execute = async (interaction: Interaction) => {
           await loggingChannel.send({ embeds: [closedLoggingEmbed] });
           await interaction.client.users.send(ticket.user, { embeds: [userCloseEmbed] });
           await (interaction.channel as TextChannel).delete();
+        } else if (interaction.customId.startsWith('LOGGING_')) {
+          try {
+            if (interaction.customId.startsWith('LOGGING_KICK_USER_')) {
+              if (
+                !memberRoles.some((role) =>
+                  ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role)
+                )
+              ) {
+                throw new Error('NO_ERROR_ID_You do not have permission to use this button');
+              }
+              const user = (await (interaction.guild as Guild).members.fetch(
+                interaction.customId.split('LOGGING_KICK_USER_')[1]
+              )) as GuildMember;
+
+              const userRoles = (interaction.member as GuildMember).roles.cache.map((role) => role.id);
+              if (
+                !userRoles.some((role) =>
+                  ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role)
+                )
+              ) {
+                throw new Error('NO_ERROR_ID_This person is a staff member');
+              }
+
+              user.kick(
+                `Kicked by ${
+                  interaction.user.discriminator == '0'
+                    ? interaction.user.username
+                    : `${interaction.user.username}#${interaction.user.discriminator}`
+                } (${interaction.user.id}) for clicking button @ ${interaction.message.url}`
+              );
+
+              const responseEmbed = new EmbedBuilder()
+                .setColor(other.colors.red.hex as ColorResolvable)
+                .setTitle('User Kicked')
+                .setDescription(`Successfully kicked <@${user.id}>`)
+                .setTimestamp()
+                .setFooter({
+                  text: `by @kathund | ${discord.supportInvite} for support`,
+                  iconURL: other.logo,
+                });
+
+              await interaction.reply({ embeds: [responseEmbed], ephemeral: true });
+            } else if (interaction.customId.startsWith('LOGGING_BAN_USER_')) {
+              if (
+                !memberRoles.some((role) =>
+                  ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role)
+                )
+              ) {
+                throw new Error('NO_ERROR_ID_You do not have permission to use this button');
+              }
+              const user = (await (interaction.guild as Guild).members.fetch(
+                interaction.customId.split('LOGGING_BAN_USER_')[1]
+              )) as GuildMember;
+
+              const userRoles = (interaction.member as GuildMember).roles.cache.map((role) => role.id);
+              if (
+                !userRoles.some((role) =>
+                  ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role)
+                )
+              ) {
+                throw new Error('NO_ERROR_ID_This person is a staff member');
+              }
+
+              user.ban({
+                reason: `Banned by ${
+                  interaction.user.discriminator == '0'
+                    ? interaction.user.username
+                    : `${interaction.user.username}#${interaction.user.discriminator}`
+                } (${interaction.user.id}) for clicking button @ ${interaction.message.url}`,
+              });
+
+              const responseEmbed = new EmbedBuilder()
+                .setColor(other.colors.red.hex as ColorResolvable)
+                .setTitle('User Banned')
+                .setDescription(`Successfully banned <@${user.id}>`)
+                .setTimestamp()
+                .setFooter({
+                  text: `by @kathund | ${discord.supportInvite} for support`,
+                  iconURL: other.logo,
+                });
+
+              await interaction.reply({ embeds: [responseEmbed], ephemeral: true });
+            }
+          } catch (error: any) {
+            if (String(error).includes('NO_ERROR_ID_')) {
+              errorMessage(error);
+              const errorEmbed = new EmbedBuilder()
+                .setColor(other.colors.red.hex as ColorResolvable)
+                .setTitle('An error occurred')
+                .setDescription(`Error Info - \`${cleanMessage(error)}\``)
+                .setFooter({
+                  text: `by @kathund | ${discord.supportInvite} for support`,
+                  iconURL: other.logo,
+                });
+              const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+                new ButtonBuilder().setLabel('Support Discord').setURL(discord.supportInvite).setStyle(ButtonStyle.Link)
+              );
+              await interaction.reply({ embeds: [errorEmbed], components: [row] });
+              if (interaction.replied || interaction.deferred) {
+                return await interaction.followUp({ embeds: [errorEmbed], components: [row], ephemeral: true });
+              } else {
+                return await interaction.reply({ embeds: [errorEmbed], components: [row], ephemeral: true });
+              }
+            } else {
+              const errorIdButtons = generateID(other.errorIdLength);
+              errorMessage(`Error Id - ${errorIdButtons}`);
+              errorMessage(error);
+              const errorEmbed = new EmbedBuilder()
+                .setColor(other.colors.red.hex as ColorResolvable)
+                .setTitle('An error occurred')
+                .setDescription(
+                  `Use </report-bug:${
+                    discord.commands['report-bug']
+                  }> to report it\nError id - ${errorIdButtons}\nError Info - \`${cleanMessage(error)}\``
+                )
+                .setFooter({
+                  text: `by @kathund | ${discord.supportInvite} for support`,
+                  iconURL: other.logo,
+                });
+              const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+                new ButtonBuilder().setLabel('Support Discord').setURL(discord.supportInvite).setStyle(ButtonStyle.Link)
+              );
+              if (interaction.replied || interaction.deferred) {
+                await interaction.followUp({ embeds: [errorEmbed], components: [row], ephemeral: true });
+              } else {
+                await interaction.reply({ embeds: [errorEmbed], components: [row], ephemeral: true });
+              }
+            }
+          }
         }
       } catch (error: any) {
         if (String(error).includes('NO_ERROR_ID_')) {
