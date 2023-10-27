@@ -12,18 +12,12 @@ import {
   Events,
   Guild,
 } from 'discord.js';
-import {
-  isTicketBlacklisted,
-  blacklistCheck,
-  cleanMessage,
-  generateID,
-  writeAt,
-  toFixed,
-} from '../functions/helper';
+import { isTicketBlacklisted, blacklistCheck, cleanMessage, generateID, writeAt, toFixed } from '../functions/helper';
 import { eventMessage, errorMessage } from '../functions/logger';
 import { other, discord, api } from '../../config.json';
 import { arrayMessages } from '../types/main';
 import { readFileSync } from 'fs';
+import axios from 'axios';
 
 export const name = Events.InteractionCreate;
 
@@ -382,10 +376,8 @@ export const execute = async (interaction: Interaction) => {
             },
             messages: changed,
           };
-          const res = await fetch(`${api.transcripts.url}/transcript/save`, {
-            method: 'POST',
+          const res = await axios.post(`${api.transcripts.url}/transcript/save`, data, {
             headers: { 'Content-Type': 'application/json', key: api.transcripts.key },
-            body: JSON.stringify(data),
           });
           if (res.status != 201) throw new Error('Error creating transcript');
           if (!ticket) throw new Error('Ticket not found? Please report this!');
@@ -547,10 +539,8 @@ export const execute = async (interaction: Interaction) => {
             },
             messages: changed,
           };
-          const res = await fetch(`${api.transcripts.url}/transcript/save`, {
-            method: 'POST',
+          const res = await axios.post(`${api.transcripts.url}/transcript/save`, data, {
             headers: { 'Content-Type': 'application/json', key: api.transcripts.key },
-            body: JSON.stringify(data),
           });
           if (res.status != 201) throw new Error('Error creating transcript');
           await interaction.followUp({ content: 'Closing ticket...', ephemeral: true });
