@@ -2,7 +2,8 @@ import { Collection, SlashCommandBuilder, ChatInputCommandInteraction } from 'di
 
 export interface SlashCommand {
   command: SlashCommandBuilder | any;
-  execute: (interaction: ChatInputCommandInteraction) => void
+  // eslint-disable-next-line
+  execute: (interaction: ChatInputCommandInteraction) => void;
 }
 
 export interface arrayMessages {
