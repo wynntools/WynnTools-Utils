@@ -33,7 +33,9 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       )
       .addFields({
         name: 'General',
-        value: `<:Dev:1130772126769631272> Developer - \`@kathund\`\n<:bullet:1064700156789927936> Version \`${version}\`\nUptime - <t:${version}:R>`,
+        value: `<:Dev:1130772126769631272> Developer - \`@kathund\`\n<:bullet:1064700156789927936> Version \`${version}\`\nUptime - <t:${Math.floor(
+          (Date.now() - interaction.client.uptime) / 1000
+        )}:R>`,
         inline: true,
       })
       .setFooter({

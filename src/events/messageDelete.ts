@@ -36,7 +36,7 @@ export const execute = async (message: Message) => {
       });
 
     await loggerChannel.send({
-      content: `Message Deleted - [Link](${message.url})]`,
+      content: `Message Deleted - [Link](${message.url})`,
       embeds: [messageDeleteLoggerEmbed],
     });
   } catch (error: any) {

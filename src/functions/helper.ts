@@ -1,7 +1,7 @@
 import { readJson, writeJson } from 'fs-extra';
 import { dirname as getDirName } from 'path';
-import { errorMessage } from './logger';
 import { other } from '../../config.json';
+import { errorMessage } from './logger';
 import { readFileSync } from 'fs';
 import { set } from 'lodash';
 import { sync } from 'mkdirp';

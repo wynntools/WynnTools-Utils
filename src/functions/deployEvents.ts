@@ -1,6 +1,6 @@
+import { errorMessage, eventMessage } from './logger';
 import { Client } from 'discord.js';
 import { readdirSync } from 'fs';
-import { errorMessage, eventMessage } from './logger';
 
 export const deployEvents = async (client: Client) => {
   try {
@@ -14,7 +14,8 @@ export const deployEvents = async (client: Client) => {
       }
       const event = await import(`../events/${file}`);
       const name = file.split('.')[0];
-      client.on(name, event.default.bind(null, client));
+
+      client.on(name, event.execute.bind(null));
       eventMessage(`Successfully loaded ${name}`);
     }
     eventMessage(`Successfully loaded ${count} event(s).`);
