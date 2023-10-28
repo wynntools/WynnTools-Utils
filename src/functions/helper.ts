@@ -1,76 +1,76 @@
-const { errorMessage } = require('./logger.js');
-const config = require('../../config.json');
-const getDirName = require('path').dirname;
-const fsExtra = require('fs-extra');
-const { set } = require('lodash');
-const mkdirp = require('mkdirp');
-const fs = require('fs');
+import { readJson, writeJson } from 'fs-extra';
+import { dirname as getDirName } from 'path';
+import { other } from '../../config.json';
+import { errorMessage } from './logger';
+import { readFileSync } from 'fs';
+import { set } from 'lodash';
+import { sync } from 'mkdirp';
 
-function generateID(length) {
+export const generateID = (length: number) => {
   try {
     let result = '';
     const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890',
       charactersLength = characters.length;
-    for (var i = 0; i < length; i++) {
+    for (let i = 0; i < length; i++) {
       result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return result;
-  } catch (error) {
+  } catch (error: any) {
     errorMessage(error);
   }
-}
+};
 
-function getCurrentTime() {
+export const getCurrentTime = () => {
   try {
-    if (config.other.timezone === null) {
+    if (other.timezone === null) {
       return new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
     } else {
       return new Date().toLocaleString('en-US', {
         hour: 'numeric',
         minute: 'numeric',
         hour12: true,
-        timeZone: config.other.timezone,
+        timeZone: other.timezone,
       });
     }
-  } catch (error) {
-    var errorId = generateID(config.other.errorIdLength);
+  } catch (error: any) {
+    const errorId = generateID(other.errorIdLength);
     errorMessage(`Error Id - ${errorId}`);
     errorMessage(error);
     return error;
   }
-}
+};
 
-async function writeAt(filePath, jsonPath, value) {
+export const writeAt = async (filePath: string, jsonPath: string, value: any) => {
   try {
-    mkdirp.sync(getDirName(filePath));
-    const json = await fsExtra.readJson(filePath);
+    sync(getDirName(filePath));
+    const json = await readJson(filePath);
     set(json, jsonPath, value);
-    return await fsExtra.writeJson(filePath, json);
-  } catch (error) {
+    return await writeJson(filePath, json);
+  } catch (error: any) {
     errorMessage(error);
     const json_1 = {};
     set(json_1, jsonPath, value);
-    return await fsExtra.writeJson(filePath, json_1);
+    return await writeJson(filePath, json_1);
   }
-}
+};
 
-async function blacklistCheck(id) {
+export const blacklistCheck = async (id: string) => {
   try {
-    const blacklist = await JSON.parse(fs.readFileSync('data/blacklist.json', 'utf8'));
+    const blacklist = await JSON.parse(readFileSync('data/blacklist.json', 'utf8'));
     if (blacklist[id]) {
       return true;
     } else {
       return false;
     }
-  } catch (error) {
-    var errorId = generateID(config.other.errorIdLength);
+  } catch (error: any) {
+    const errorId = generateID(other.errorIdLength);
     errorMessage(`Error Id - ${errorId}`);
     errorMessage(error);
     return error;
   }
-}
+};
 
-function toFixed(num, fixed) {
+export const toFixed = (num: any, fixed: number) => {
   try {
     if (fixed === undefined) fixed = 0;
     const response = new RegExp('^-?\\d+(?:\\.\\d{0,' + (fixed || -1) + '})?');
@@ -84,19 +84,19 @@ function toFixed(num, fixed) {
     }
 
     return parts.join('.');
-  } catch (error) {
-    var errorId = generateID(config.other.errorIdLength);
+  } catch (error: any) {
+    const errorId = generateID(other.errorIdLength);
     errorMessage(`Error Id - ${errorId}`);
     errorMessage(error);
     return error;
   }
-}
+};
 
-function cleanMessage(message) {
+export const cleanMessage = (message: any) => {
   return message.toString().replaceAll('Error: ', '').replaceAll('`', '').replaceAll('ez', 'easy');
-}
+};
 
-function convertChannelType(type) {
+export const convertChannelType = (type: number) => {
   if (type === 0) {
     return 'GuildText';
   } else if (type === 1) {
@@ -126,31 +126,31 @@ function convertChannelType(type) {
   } else {
     return 'Unknown';
   }
-}
+};
 
-function isTicketBlacklisted(userID, ticketBlacklist) {
+export const isTicketBlacklisted = (userID: string, ticketBlacklist: any) => {
   for (const user of ticketBlacklist) {
     if (user.user === userID) {
       return true;
     }
   }
   return false;
-}
+};
 
-async function removeFromArray(array, id) {
+export const removeFromArray = (array: any, id: string) => {
   try {
-    const index = array.findIndex((obj) => obj.user === id);
+    const index = array.findIndex((obj: any) => obj.user === id);
     if (index > -1) {
       array.splice(index, 1);
       return array;
     }
-  } catch (error) {
+  } catch (error: any) {
     errorMessage(error);
     return error;
   }
-}
+};
 
-module.exports = {
+export default {
   generateID,
   getCurrentTime,
   writeAt,
