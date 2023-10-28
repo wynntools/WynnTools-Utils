@@ -44,7 +44,7 @@ jobs:
       - name: prettier
         run: npm run prettier:check
 
-  compile:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Git checkout
@@ -61,5 +61,5 @@ jobs:
       - name: Copy Config
         run: cp config.example.json config.json
 
-      - name: Test Compile
-        run: npm run compile
+      - name: Test Build
+        run: npm run build
