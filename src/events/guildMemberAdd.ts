@@ -38,8 +38,8 @@ export const execute = async (member: GuildMember) => {
                     : `${member.user.username}#${member.user.discriminator}`
                 })`
               : member.user.discriminator == '0'
-              ? `@${member.user.username}`
-              : `${member.user.username}#${member.user.discriminator}`
+                ? `@${member.user.username}`
+                : `${member.user.username}#${member.user.discriminator}`
           } - ${member.user.id} <@${member.user.id}>`,
           inline: false,
         },
