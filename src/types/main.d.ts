@@ -6,14 +6,56 @@ export interface SlashCommand {
   execute: (interaction: ChatInputCommandInteraction) => void;
 }
 
-export interface arrayMessages {
-  timestamp: number;
-  content: string;
-  user: string;
+export interface User {
   username: string;
+  id: string;
+  displayName: string | null;
   avatar: string | null;
   bot: boolean;
-  displayName: string;
+}
+export interface Message {
+  author: User;
+  content: string;
+  timestamp: number;
+}
+
+export interface OpenClose {
+  timestamp: number;
+  reason: string | null;
+  by: User;
+}
+
+export interface Users {
+  user: User;
+  added: {
+    timestamp: number;
+    by: User;
+  };
+  removed: {
+    timestamp: number;
+    by: User;
+  } | null;
+}
+
+export interface Ticket {
+  _id?: any;
+  __v?: any;
+  uuid: string;
+  ticketInfo: {
+    name: string;
+    channelId: string;
+    opened: OpenClose;
+    closed: OpenClose | null;
+    users: Users[] | [];
+  };
+  messages: Message[] | [];
+}
+
+export interface Blacklist {
+  user: User;
+  timestamp: number;
+  by: User;
+  reason: string | null;
 }
 
 declare module 'discord.js' {

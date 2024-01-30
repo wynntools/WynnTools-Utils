@@ -16,12 +16,6 @@
     "botInvite": "BOT_INVITE_URL",
     "buttonTimeout": 30
   },
-  "api": {
-    "transcripts": {
-      "url": "YOUR_LOGGING_API_URL",
-      "key": "YOUR_API_KEY"
-    }
-  },
   "other": {
     "colors": {
       "cherryBlossomPink": { "hex": "#EFADC0", "hsl": "343, 67, 81", "rgb": "239, 173, 192" },
@@ -61,5 +55,6 @@
     "errorIdLength": 15,
     "cacheTimeout": 180,
     "devMode": false
-  }
+  },
+  "mongo": "Mongo url"
 }
