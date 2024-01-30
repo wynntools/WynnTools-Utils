@@ -92,11 +92,7 @@ export const execute = async (interaction: Interaction) => {
           errorMessage(error);
         }
 
-        if (other.devMode) {
-          if (!memberRoles.some((role) => ([discord.roles.dev] as string[]).includes(role))) {
-            throw new Error('You do not have permission to use this command');
-          }
-        }
+        await command.execute(interaction);
       } catch (error: any) {
         const errorIdCheck = generateID(other.errorIdLength);
         errorMessage(`Error ID: ${errorIdCheck}`);
