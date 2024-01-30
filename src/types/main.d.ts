@@ -49,6 +49,7 @@ export interface Ticket {
     users: Users[] | [];
   };
   messages: Message[] | [];
+  reason: string | null;
 }
 
 export interface Blacklist {

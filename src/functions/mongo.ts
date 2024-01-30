@@ -53,6 +53,7 @@ const ticketSchema = new Schema({
     users: { type: [usersSchema], default: [] },
   },
   messages: [messageSchema],
+  reason: { type: String, default: null },
 });
 
 const Ticket = model('Ticket', ticketSchema);

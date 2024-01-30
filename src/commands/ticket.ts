@@ -73,6 +73,12 @@ export const data = new SlashCommandBuilder()
       .addStringOption((option) =>
         option.setName('name').setDescription('The new name of the ticket').setRequired(true)
       )
+  )
+  .addSubcommand((subcommand) =>
+    subcommand
+      .setName('close-request')
+      .setDescription('Request to close a ticket')
+      .addStringOption((option) => option.setName('reason').setDescription('The reason for closing a ticket'))
   );
 
 export const execute = async (interaction: ChatInputCommandInteraction) => {
@@ -171,6 +177,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
           users: [],
         },
         messages: [],
+        reason: null,
       });
 
       if (!savedTicket.success) throw new Error('Failed to save ticket');
@@ -259,6 +266,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
             users: ticket.ticketInfo.users,
           },
           messages: changed,
+          reason: null,
         });
         if (!update.success) throw new Error('Failed to save ticket');
         const closeEmbed = new EmbedBuilder()
@@ -374,6 +382,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
           ],
         },
         messages: ticket.messages,
+        reason: null,
       });
 
       if (!updatedTicket.success) throw new Error('Failed to save ticket');
@@ -477,6 +486,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
           uuid: uuid,
           ticketInfo: ticket.ticketInfo,
           messages: ticket.messages,
+          reason: null,
         });
 
         if (!updatedTicket.success) throw new Error('Failed to save ticket');
@@ -630,6 +640,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
           users: ticket.ticketInfo.users,
         },
         messages: ticket.messages,
+        reason: null,
       });
 
       if (!updatedTicket.success) throw new Error('Failed to save ticket');
@@ -690,9 +701,52 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         .setColor(other.colors.cherryBlossomPink as ColorResolvable)
         .setTitle('Ticket Rename')
         .setDescription(
-          `Successfully renammed the ticket from ${oldName} to ${(interaction.channel as TextChannel).name}`
+          `Successfully renamed the ticket from ${oldName} to ${(interaction.channel as TextChannel).name}`
         );
       await interaction.reply({ embeds: [responseEmbed] });
+    } else if (subCommand === 'close-request') {
+      if (!(interaction.channel as TextChannel).name.includes('ticket-')) {
+        throw new Error('This is not a ticket channel');
+      }
+      const messages = (await (interaction.channel as TextChannel).messages.fetch()).sort(
+        (a, b) => a.createdTimestamp - b.createdTimestamp
+      );
+      const uuid = messages.first()?.content.split(' | ')[1] as string;
+      const ticket = (await getTicket(uuid)).ticket as unknown as Ticket;
+
+      const reason = interaction.options.getString('reason') || 'No reason provided';
+
+      if (ticket.ticketInfo.closed !== null) {
+        throw new Error('This ticket is already closed');
+      }
+
+      const closeRequestEmbed = new EmbedBuilder()
+        .setColor(other.colors.red as ColorResolvable)
+        .setTitle('Ticket Close Request')
+        .setDescription(`<@${interaction.user.id}> has requested to close this ticket\n\nReason: ${reason}`)
+        .setTimestamp()
+        .setFooter({
+          text: `by @kathund | ${discord.supportInvite} for support`,
+          iconURL: other.logo,
+        });
+
+      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+          .setLabel('Accept Ticket Close')
+          .setCustomId(`TICKET_ACCEPT_${uuid}`)
+          .setStyle(ButtonStyle.Danger),
+        new ButtonBuilder()
+          .setLabel('Deny Ticket Close')
+          .setCustomId(`TICKET_DENY_${uuid}`)
+          .setStyle(ButtonStyle.Danger)
+      );
+
+      await (interaction.channel as TextChannel).send({
+        content: `<@${ticket.ticketInfo.opened.by.id}>`,
+        embeds: [closeRequestEmbed],
+        components: [row],
+      });
+      await interaction.reply({ content: 'Close request sent', ephemeral: true });
     }
   } catch (error: any) {
     const errorId = generateID(other.errorIdLength);

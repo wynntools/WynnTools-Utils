@@ -220,6 +220,7 @@ export const execute = async (interaction: Interaction) => {
               users: [],
             },
             messages: [],
+            reason: null,
           });
 
           if (!savedTicket.success) throw new Error('Failed to save ticket');
@@ -316,6 +317,7 @@ export const execute = async (interaction: Interaction) => {
                 users: ticket.ticketInfo.users,
               },
               messages: changed,
+              reason: null,
             });
             if (!update.success) throw new Error('Failed to save ticket');
             const closeEmbed = new EmbedBuilder()
@@ -386,6 +388,147 @@ export const execute = async (interaction: Interaction) => {
           modal.addComponents(reason);
 
           await interaction.showModal(modal);
+        } else if (interaction.customId.startsWith('TICKET_ACCEPT_')) {
+          const uuid = interaction.customId.split('TICKET_ACCEPT_')[1];
+          const ticket = (await getTicket(uuid)).ticket as unknown as Ticket;
+          if (interaction.user.id !== ticket.ticketInfo.opened.by.id) {
+            throw new Error('You did not open this ticket');
+          }
+
+          const reason = ticket.reason;
+
+          if (!(interaction.channel as TextChannel).name.toLowerCase().includes('ticket-')) {
+            throw new Error('This is not a ticket channel');
+          }
+          const messages = await (interaction.channel as TextChannel).messages.fetch();
+          let changed = Array<Message>();
+          messages.forEach((message) => {
+            changed.push({
+              author: {
+                username: message.author.username,
+                id: message.author.id,
+                displayName: message.author.displayName,
+                avatar: message.author.avatarURL(),
+                bot: message.author.bot,
+              },
+              content: message.content,
+              timestamp: message.createdTimestamp,
+            });
+          });
+          changed = changed.sort((a, b) => a.timestamp - b.timestamp);
+          if (ticket.ticketInfo.closed === null) {
+            const update = await updateTicket({
+              uuid: uuid,
+              ticketInfo: {
+                name: (interaction.channel as TextChannel).name,
+                channelId: (interaction.channel as TextChannel).id,
+                opened: ticket.ticketInfo.opened,
+                closed: {
+                  timestamp: toFixed(new Date().getTime() / 1000, 0),
+                  reason: reason,
+                  by: {
+                    username: interaction.user.username,
+                    id: interaction.user.id,
+                    displayName: interaction.user.displayName,
+                    avatar: interaction.user.avatarURL(),
+                    bot: interaction.user.bot,
+                  },
+                },
+                users: ticket.ticketInfo.users,
+              },
+              messages: changed,
+              reason: null,
+            });
+            if (!update.success) throw new Error('Failed to save ticket');
+            const closeEmbed = new EmbedBuilder()
+              .setColor(other.colors.red as ColorResolvable)
+              .setTitle('Ticket Closed')
+              .addFields(
+                {
+                  name: 'Reason',
+                  value: `${reason}`,
+                  inline: true,
+                },
+                {
+                  name: 'Ticket ID',
+                  value: uuid,
+                  inline: true,
+                },
+                {
+                  name: 'Transcript',
+                  value: `https://tickets.kath.lol/${uuid}`,
+                  inline: true,
+                },
+                {
+                  name: 'Ticket Opened',
+                  value: `<t:${ticket.ticketInfo.opened.timestamp}:R>`,
+                  inline: true,
+                },
+                {
+                  name: 'Ticket Opened By',
+                  value: `<@${ticket.ticketInfo.opened.by.id}>`,
+                  inline: true,
+                },
+                {
+                  name: 'Ticket Closed',
+                  value: `<t:${toFixed(new Date().getTime() / 1000, 0)}:R>`,
+                  inline: true,
+                },
+                {
+                  name: 'Ticket Closed By',
+                  value: `<@${interaction.user.id}>`,
+                  inline: true,
+                }
+              )
+              .setTimestamp()
+              .setFooter({
+                text: `by @kathund | ${discord.supportInvite} for support`,
+                iconURL: other.logo,
+              });
+            const loggingChannel = (interaction.guild as Guild).channels.cache.get(
+              discord.channels.ticketLogging
+            ) as TextChannel;
+            if (!loggingChannel) throw new Error('Ticket logging channel not found? Please report this!');
+            await loggingChannel.send({ embeds: [closeEmbed] });
+            await interaction.client.users.send(ticket.ticketInfo.opened.by.id, { embeds: [closeEmbed] });
+            await (interaction.channel as TextChannel).delete();
+          }
+        } else if (interaction.customId.startsWith('TICKET_DENY_')) {
+          const uuid = interaction.customId.split('TICKET_DENY_')[1];
+          const ticket = (await getTicket(uuid)).ticket as unknown as Ticket;
+          if (interaction.user.id !== ticket.ticketInfo.opened.by.id) {
+            throw new Error('You did not open this ticket');
+          }
+          if (!(interaction.channel as TextChannel).name.toLowerCase().includes('ticket-')) {
+            throw new Error('This is not a ticket channel');
+          }
+
+          const responseEmbed = new EmbedBuilder()
+            .setColor(other.colors.red as ColorResolvable)
+            .setTitle('Ticket Denied')
+            .setDescription(`Ticket Close request has been denied by ${interaction.user.tag} (${interaction.user.id})`)
+            .setTimestamp()
+            .setFooter({
+              text: `by @kathund | ${discord.supportInvite} for support`,
+              iconURL: other.logo,
+            });
+          const update = await updateTicket({
+            uuid: uuid,
+            ticketInfo: {
+              name: (interaction.channel as TextChannel).name,
+              channelId: (interaction.channel as TextChannel).id,
+              opened: ticket.ticketInfo.opened,
+              closed: null,
+              users: ticket.ticketInfo.users,
+            },
+            messages: ticket.messages,
+            reason: null,
+          });
+          if (!update.success) throw new Error('Failed to save ticket');
+
+          await interaction.update({ components: [] });
+
+          await interaction.followUp({ embeds: [responseEmbed], content: `<@&${discord.roles.mod}>` });
         } else if (interaction.customId.startsWith('LOGGING_')) {
           try {
             if (interaction.customId.startsWith('LOGGING_KICK_USER_')) {
@@ -613,6 +756,7 @@ export const execute = async (interaction: Interaction) => {
               users: ticket.ticketInfo.users,
             },
             messages: changed,
+            reason: null,
           });
           if (!update.success) throw new Error('Failed to save ticket');
           const closeEmbed = new EmbedBuilder()
