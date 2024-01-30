@@ -26,7 +26,7 @@ export const execute = async (member: GuildMember) => {
           member.user.createdTimestamp > sevenDaysAgo.getTime() ? ' (New Account)' : ''
         }`
       )
-      .setColor(other.colors.green.hex as ColorResolvable)
+      .setColor(other.colors.green as ColorResolvable)
       .addFields(
         {
           name: 'User',

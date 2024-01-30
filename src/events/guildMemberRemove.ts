@@ -12,7 +12,7 @@ export const execute = async (member: GuildMember) => {
     eventMessage(`${Events.GuildMemberRemove} Event triggered by ${member.user.id}`);
     const memberLeaveLoggerEmbed = new EmbedBuilder()
       .setDescription(`Member Left (${member.user.id})${member.user.bot ? ' (Bot)' : ''}`)
-      .setColor(other.colors.red.hex as ColorResolvable)
+      .setColor(other.colors.red as ColorResolvable)
       .addFields(
         {
           name: 'User',

@@ -102,7 +102,7 @@ export const execute = async (interaction: Interaction) => {
         errorMessage(`Error ID: ${errorIdCheck}`);
         errorMessage(error);
         const errorEmbed = new EmbedBuilder()
-          .setColor(other.colors.red.hex as ColorResolvable)
+          .setColor(other.colors.red as ColorResolvable)
           .setTitle('An error occurred')
           .setDescription(
             `Use </report-bug:${
@@ -229,7 +229,7 @@ export const execute = async (interaction: Interaction) => {
           if (!savedTicket.success) throw new Error('Failed to save ticket');
 
           const ticketEmbed = new EmbedBuilder()
-            .setColor(other.colors.cherryBlossomPink.hex as ColorResolvable)
+            .setColor(other.colors.cherryBlossomPink as ColorResolvable)
             .setTitle('Ticket Opened')
             .setDescription(`Ticket opened by ${interaction.user.tag} (${interaction.user.id})\n\nReason: ${reason}`)
             .setTimestamp()
@@ -263,7 +263,7 @@ export const execute = async (interaction: Interaction) => {
           });
 
           const ticketOpenedEmbed = new EmbedBuilder()
-            .setColor(other.colors.cherryBlossomPink.hex as ColorResolvable)
+            .setColor(other.colors.cherryBlossomPink as ColorResolvable)
             .setTitle('Ticket Opened')
             .setDescription(`Your ticket has been opened in <#${channel.id}>`);
           await interaction.followUp({ embeds: [ticketOpenedEmbed], ephemeral: true });
@@ -323,7 +323,7 @@ export const execute = async (interaction: Interaction) => {
             });
             if (!update.success) throw new Error('Failed to save ticket');
             const closeEmbed = new EmbedBuilder()
-              .setColor(other.colors.red.hex as ColorResolvable)
+              .setColor(other.colors.red as ColorResolvable)
               .setTitle('Ticket Closed')
               .addFields(
                 {
@@ -422,7 +422,7 @@ export const execute = async (interaction: Interaction) => {
               );
 
               const responseEmbed = new EmbedBuilder()
-                .setColor(other.colors.red.hex as ColorResolvable)
+                .setColor(other.colors.red as ColorResolvable)
                 .setTitle('User Kicked')
                 .setDescription(`Successfully kicked <@${user.id}>`)
                 .setTimestamp()
@@ -462,7 +462,7 @@ export const execute = async (interaction: Interaction) => {
               });
 
               const responseEmbed = new EmbedBuilder()
-                .setColor(other.colors.red.hex as ColorResolvable)
+                .setColor(other.colors.red as ColorResolvable)
                 .setTitle('User Banned')
                 .setDescription(`Successfully banned <@${user.id}>`)
                 .setTimestamp()
@@ -477,7 +477,7 @@ export const execute = async (interaction: Interaction) => {
             if (String(error).includes('NO_ERROR_ID_')) {
               errorMessage(error);
               const errorEmbed = new EmbedBuilder()
-                .setColor(other.colors.red.hex as ColorResolvable)
+                .setColor(other.colors.red as ColorResolvable)
                 .setTitle('An error occurred')
                 .setDescription(`Error Info - \`${cleanMessage(error)}\``)
                 .setFooter({
@@ -498,7 +498,7 @@ export const execute = async (interaction: Interaction) => {
               errorMessage(`Error Id - ${errorIdButtons}`);
               errorMessage(error);
               const errorEmbed = new EmbedBuilder()
-                .setColor(other.colors.red.hex as ColorResolvable)
+                .setColor(other.colors.red as ColorResolvable)
                 .setTitle('An error occurred')
                 .setDescription(
                   `Use </report-bug:${
@@ -524,7 +524,7 @@ export const execute = async (interaction: Interaction) => {
         if (String(error).includes('NO_ERROR_ID_')) {
           errorMessage(error);
           const errorEmbed = new EmbedBuilder()
-            .setColor(other.colors.red.hex as ColorResolvable)
+            .setColor(other.colors.red as ColorResolvable)
             .setTitle('An error occurred')
             .setDescription(`Error Info - \`${cleanMessage(error)}\``)
             .setFooter({
@@ -545,7 +545,7 @@ export const execute = async (interaction: Interaction) => {
           errorMessage(`Error Id - ${errorIdButtons}`);
           errorMessage(error);
           const errorEmbed = new EmbedBuilder()
-            .setColor(other.colors.red.hex as ColorResolvable)
+            .setColor(other.colors.red as ColorResolvable)
             .setTitle('An error occurred')
             .setDescription(
               `Use </report-bug:${
@@ -620,7 +620,7 @@ export const execute = async (interaction: Interaction) => {
           });
           if (!update.success) throw new Error('Failed to save ticket');
           const closeEmbed = new EmbedBuilder()
-            .setColor(other.colors.red.hex as ColorResolvable)
+            .setColor(other.colors.red as ColorResolvable)
             .setTitle('Ticket Closed')
             .addFields(
               {

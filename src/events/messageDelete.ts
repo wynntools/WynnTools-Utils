@@ -12,7 +12,7 @@ export const execute = async (message: Message) => {
     eventMessage(`${Events.MessageDelete} Event triggered by ${message.author.id}`);
     const messageDeleteLoggerEmbed = new EmbedBuilder()
       .setDescription(`Message Deleted - <#${message.channel.id}> (${message.channel.id})`)
-      .setColor(other.colors.red.hex as ColorResolvable)
+      .setColor(other.colors.red as ColorResolvable)
       .addFields(
         {
           name: 'User',

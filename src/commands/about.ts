@@ -26,7 +26,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     );
     const embed = new EmbedBuilder()
       .setTitle(`WynnTools Utils Stats`)
-      .setColor(other.colors.green.hex as ColorResolvable)
+      .setColor(other.colors.green as ColorResolvable)
       .setTimestamp()
       .setDescription(
         'WynnTools - A bot that does stuff with the wynncraft api - The Only bot that uses images **that i have seen**'
@@ -48,7 +48,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     errorMessage(`Error Id - ${errorId}`);
     errorMessage(error);
     const errorEmbed = new EmbedBuilder()
-      .setColor(other.colors.red.hex as ColorResolvable)
+      .setColor(other.colors.red as ColorResolvable)
       .setTitle('An error occurred')
       .setDescription(
         `Use </report-bug:${

@@ -176,7 +176,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       if (!savedTicket.success) throw new Error('Failed to save ticket');
 
       const ticketEmbed = new EmbedBuilder()
-        .setColor(other.colors.red.hex as ColorResolvable)
+        .setColor(other.colors.red as ColorResolvable)
         .setTitle('Ticket Opened')
         .setDescription(`Ticket opened by ${interaction.user.tag} (${interaction.user.id})\n\nReason: ${reason}`)
         .setTimestamp()
@@ -202,7 +202,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         if (message.content === `<@${interaction.user.id}> | ${uuid}`) await message.pin();
       });
       const ticketOpenedEmbed = new EmbedBuilder()
-        .setColor(other.colors.cherryBlossomPink.hex as ColorResolvable)
+        .setColor(other.colors.cherryBlossomPink as ColorResolvable)
         .setTitle('Ticket Opened')
         .setDescription(`Your ticket has been opened in <#${channel.id}>`);
       await interaction.editReply({ embeds: [ticketOpenedEmbed] });
@@ -262,7 +262,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         });
         if (!update.success) throw new Error('Failed to save ticket');
         const closeEmbed = new EmbedBuilder()
-          .setColor(other.colors.red.hex as ColorResolvable)
+          .setColor(other.colors.red as ColorResolvable)
           .setTitle('Ticket Closed')
           .addFields(
             {
@@ -435,7 +435,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       });
 
       const responseEmbed = new EmbedBuilder()
-        .setColor(other.colors.cherryBlossomPink.hex as ColorResolvable)
+        .setColor(other.colors.cherryBlossomPink as ColorResolvable)
         .setTitle('User Added')
         .setDescription(`Successfully added <@${addUser.id}> to this ticket`);
       await interaction.reply({ embeds: [responseEmbed] });
@@ -538,7 +538,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       });
 
       const responseEmbed = new EmbedBuilder()
-        .setColor(other.colors.red.hex as ColorResolvable)
+        .setColor(other.colors.red as ColorResolvable)
         .setTitle('User Removed')
         .setDescription(`Successfully removed <@${removeUser.id}> to this ticket`);
       await interaction.reply({ embeds: [responseEmbed] });
@@ -576,7 +576,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       if (!blacklist.success) throw new Error('Failed to save blacklist');
 
       const blacklistEmbed = new EmbedBuilder()
-        .setColor(other.colors.red.hex as ColorResolvable)
+        .setColor(other.colors.red as ColorResolvable)
         .setTitle('User Blacklisted')
         .setDescription(`Successfully blacklisted <@${blacklistUser.id}> from tickets`);
       await interaction.reply({ embeds: [blacklistEmbed] });
@@ -598,7 +598,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       if (!blacklist.success) throw new Error('Failed to delete blacklist');
 
       const blacklistEmbed = new EmbedBuilder()
-        .setColor(other.colors.red.hex as ColorResolvable)
+        .setColor(other.colors.red as ColorResolvable)
         .setTitle('User Un-Blacklisted')
         .setDescription(`Successfully un-blacklisted <@${blacklistUser.id}> from tickets`);
       await interaction.reply({ embeds: [blacklistEmbed] });
@@ -687,7 +687,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       });
 
       const responseEmbed = new EmbedBuilder()
-        .setColor(other.colors.cherryBlossomPink.hex as ColorResolvable)
+        .setColor(other.colors.cherryBlossomPink as ColorResolvable)
         .setTitle('Ticket Rename')
         .setDescription(
           `Successfully renammed the ticket from ${oldName} to ${(interaction.channel as TextChannel).name}`
@@ -699,7 +699,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     errorMessage(`Error Id - ${errorId}`);
     errorMessage(error);
     const errorEmbed = new EmbedBuilder()
-      .setColor(other.colors.red.hex as ColorResolvable)
+      .setColor(other.colors.red as ColorResolvable)
       .setTitle('An error occurred')
       .setDescription(
         `Use </report-bug:${
