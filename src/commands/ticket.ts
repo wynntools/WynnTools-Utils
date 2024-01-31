@@ -15,11 +15,21 @@ import {
   Guild,
   User,
 } from 'discord.js';
-import { deleteBlacklist, getBlacklist, getTicket, saveBlacklist, saveTicket, updateTicket } from '../functions/mongo';
+import { deleteBlacklist, getBlacklist, getTicket, getTicketByUser, saveBlacklist, saveTicket, updateTicket } from '../functions/mongo';
 import { cleanMessage, generateID, toFixed } from '../functions/helper';
 import { other, discord } from '../../config.json';
 import { errorMessage } from '../functions/logger';
 import { Message } from '../types/main';
+
+const permissions = [
+  PermissionFlagsBits.ReadMessageHistory,
+  PermissionFlagsBits.UseExternalEmojis,
+  PermissionFlagsBits.SendMessages,
+  PermissionFlagsBits.ViewChannel,
+  PermissionFlagsBits.AttachFiles,
+  PermissionFlagsBits.AddReactions,
+  PermissionFlagsBits.EmbedLinks,
+];
 
 export const data = new SlashCommandBuilder()
   .setName('ticket')
@@ -82,71 +92,27 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
     if (subCommand === 'open') {
       await interaction.deferReply({ ephemeral: true });
       const reason = interaction.options.getString('reason') || 'No reason provided';
+      const blacklistCheck = await getBlacklist(interaction.user.id);
+      if (!blacklistCheck.success) throw new Error('You are blacklisted from opening tickets');
+      const userTickets = await getTicketByUser(interaction.user.id);
+      if (!userTickets.tickets) throw new Error('Failed to get user tickets');
+      if (userTickets.success) {
+        const openTickets = userTickets.tickets.filter((ticket) => ticket?.ticketInfo?.closed === null);
+        if (openTickets.length >= 2) {
+          throw new Error(`You can only have 2 open tickets at a time`);
+        }
+      }
       const uuid = crypto.randomUUID();
       const channel = (await interaction?.guild?.channels.create({
         name: `ticket-${interaction.user.username}`,
         type: ChannelType.GuildText,
+        parent: discord.categories.tickets,
         permissionOverwrites: [
-          {
-            id: interaction.user.id,
-            allow: [
-              PermissionFlagsBits.ReadMessageHistory,
-              PermissionFlagsBits.UseExternalEmojis,
-              PermissionFlagsBits.SendMessages,
-              PermissionFlagsBits.ViewChannel,
-              PermissionFlagsBits.AttachFiles,
-              PermissionFlagsBits.AddReactions,
-              PermissionFlagsBits.EmbedLinks,
-            ],
-          },
-          {
-            id: (interaction.guild as Guild).roles.everyone.id,
-            deny: [
-              PermissionFlagsBits.ReadMessageHistory,
-              PermissionFlagsBits.UseExternalEmojis,
-              PermissionFlagsBits.SendMessages,
-              PermissionFlagsBits.ViewChannel,
-              PermissionFlagsBits.AttachFiles,
-              PermissionFlagsBits.AddReactions,
-              PermissionFlagsBits.EmbedLinks,
-            ],
-          },
-          {
-            id: discord.roles.dev,
-            allow: [
-              PermissionFlagsBits.ReadMessageHistory,
-              PermissionFlagsBits.UseExternalEmojis,
-              PermissionFlagsBits.SendMessages,
-              PermissionFlagsBits.ViewChannel,
-              PermissionFlagsBits.AttachFiles,
-              PermissionFlagsBits.AddReactions,
-              PermissionFlagsBits.EmbedLinks,
-            ],
-          },
-          {
-            id: discord.roles.admin,
-            allow: [
-              PermissionFlagsBits.ReadMessageHistory,
-              PermissionFlagsBits.UseExternalEmojis,
-              PermissionFlagsBits.SendMessages,
-              PermissionFlagsBits.ViewChannel,
-              PermissionFlagsBits.AttachFiles,
-              PermissionFlagsBits.AddReactions,
-              PermissionFlagsBits.EmbedLinks,
-            ],
-          },
-          {
-            id: discord.roles.mod,
-            allow: [
-              PermissionFlagsBits.ReadMessageHistory,
-              PermissionFlagsBits.UseExternalEmojis,
-              PermissionFlagsBits.SendMessages,
-              PermissionFlagsBits.ViewChannel,
-              PermissionFlagsBits.AttachFiles,
-              PermissionFlagsBits.AddReactions,
-              PermissionFlagsBits.EmbedLinks,
-            ],
-          },
+          { id: interaction.user.id, allow: permissions },
+          { id: (interaction.guild as Guild).roles.everyone.id, deny: permissions },
+          { id: discord.roles.dev, allow: permissions },
+          { id: discord.roles.admin, allow: permissions },
+          { id: discord.roles.mod, allow: permissions },
         ],
       })) as TextChannel;
       const savedTicket = await saveTicket({
@@ -321,15 +287,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         reason: null,
       });
       if (!updatedTicket.success) throw new Error('Failed to save ticket');
-      const permissions = [
-        PermissionFlagsBits.ReadMessageHistory,
-        PermissionFlagsBits.UseExternalEmojis,
-        PermissionFlagsBits.SendMessages,
-        PermissionFlagsBits.ViewChannel,
-        PermissionFlagsBits.AttachFiles,
-        PermissionFlagsBits.AddReactions,
-        PermissionFlagsBits.EmbedLinks,
-      ];
+
       const permissionOverwrites: OverwriteResolvable[] = [
         { id: ticket.ticketInfo.opened.by.id, allow: permissions },
         { id: addUser.id, allow: permissions },
@@ -383,15 +341,6 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       } else {
         throw new Error('User not found in the ticket');
       }
-      const permissions = [
-        PermissionFlagsBits.ReadMessageHistory,
-        PermissionFlagsBits.UseExternalEmojis,
-        PermissionFlagsBits.SendMessages,
-        PermissionFlagsBits.ViewChannel,
-        PermissionFlagsBits.AttachFiles,
-        PermissionFlagsBits.AddReactions,
-        PermissionFlagsBits.EmbedLinks,
-      ];
       const permissionOverwrites: OverwriteResolvable[] = [
         { id: ticket.ticketInfo.opened.by.id, allow: permissions },
         { id: discord.roles.dev, allow: permissions },
@@ -485,15 +434,6 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
         reason: null,
       });
       if (!updatedTicket.success) throw new Error('Failed to save ticket');
-      const permissions = [
-        PermissionFlagsBits.ReadMessageHistory,
-        PermissionFlagsBits.UseExternalEmojis,
-        PermissionFlagsBits.SendMessages,
-        PermissionFlagsBits.ViewChannel,
-        PermissionFlagsBits.AttachFiles,
-        PermissionFlagsBits.AddReactions,
-        PermissionFlagsBits.EmbedLinks,
-      ];
       const permissionOverwrites: OverwriteResolvable[] = [
         { id: ticket.ticketInfo.opened.by.id, allow: permissions },
         { id: discord.roles.dev, allow: permissions },

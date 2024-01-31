@@ -14,7 +14,10 @@
     "roles": { "dev": "DEV_ROLE_ID", "admin": "ADMIN_ROLE_ID", "mod": "MOD_ROLE_ID" },
     "supportInvite": "SUPPORT_SERVER_INVITE",
     "botInvite": "BOT_INVITE_URL",
-    "buttonTimeout": 30
+    "buttonTimeout": 30,
+    "categories": {
+      "tickets": "I DONT HAVE AN ID"
+    }
   },
   "other": {
     "colors": {

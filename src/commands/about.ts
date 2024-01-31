@@ -17,7 +17,7 @@ export const data = new SlashCommandBuilder().setName('about').setDescription('S
 export const execute = async (interaction: ChatInputCommandInteraction) => {
   try {
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder().setLabel('source').setURL('https://github.com/Kathund/WynnTools').setStyle(ButtonStyle.Link),
+      new ButtonBuilder().setLabel('source').setURL('https://github.com/WynnTools/WynnTools-Utils').setStyle(ButtonStyle.Link),
       new ButtonBuilder().setLabel('support').setURL(discord.supportInvite).setStyle(ButtonStyle.Link),
       new ButtonBuilder().setLabel('invite').setURL(discord.botInvite).setStyle(ButtonStyle.Link)
     );
