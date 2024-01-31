@@ -9,7 +9,6 @@ export const deployCommands = async (client: Client) => {
     client.commands = new Collection<string, SlashCommand>();
     const commandFiles = readdirSync('./src/commands');
     const commands = [];
-
     for (const file of commandFiles) {
       const command = await import(`../commands/${file}`);
       commands.push(command.data.toJSON());
@@ -17,9 +16,7 @@ export const deployCommands = async (client: Client) => {
         client.commands.set(command.data.name, command);
       }
     }
-
     const rest = new REST({ version: '10' }).setToken(discord.token);
-
     (async () => {
       try {
         await rest.put(Routes.applicationCommands(discord.clientId), { body: commands });

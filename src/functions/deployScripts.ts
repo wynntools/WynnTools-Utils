@@ -5,7 +5,6 @@ export const deployScripts = async () => {
   try {
     const scriptFiles = readdirSync('./src/scripts');
     let count = scriptFiles.length;
-
     for (const file of scriptFiles) {
       if (file.toLowerCase().includes('disabled')) {
         count--;
@@ -15,7 +14,6 @@ export const deployScripts = async () => {
       await import(`../scripts/${file}`);
       scriptMessage(`Successfully loaded ${file.split('.')[0]}`);
     }
-
     scriptMessage(`Successfully loaded ${count} script(s).`);
   } catch (error: any) {
     errorMessage(error);

@@ -1,7 +1,7 @@
 import { errorMessage, eventMessage } from '../functions/logger';
 import { deployEvents } from '../functions/deployEvents';
-import { Client } from 'discord.js';
 import { connectDB } from '../functions/mongo';
+import { Client } from 'discord.js';
 
 export const execute = (client: Client) => {
   try {

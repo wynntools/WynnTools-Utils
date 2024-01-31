@@ -20,12 +20,7 @@ export const getCurrentTime = () => {
     if (other.timezone === null) {
       return new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
     } else {
-      return new Date().toLocaleString('en-US', {
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true,
-        timeZone: other.timezone,
-      });
+      return new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true, timeZone: other.timezone });
     }
   } catch (error: any) {
     const errorId = generateID(other.errorIdLength);
@@ -40,14 +35,12 @@ export const toFixed = (num: any, fixed: number) => {
     if (fixed === undefined) fixed = 0;
     const response = new RegExp('^-?\\d+(?:\\.\\d{0,' + (fixed || -1) + '})?');
     const result = num.toString().match(response)[0];
-
     const parts = result.split('.');
     if (parts.length === 1 && fixed > 0) {
       parts.push('0'.repeat(fixed));
     } else if (parts.length === 2 && parts[1].length < fixed) {
       parts[1] = parts[1] + '0'.repeat(fixed - parts[1].length);
     }
-
     return parts.join('.');
   } catch (error: any) {
     const errorId = generateID(other.errorIdLength);

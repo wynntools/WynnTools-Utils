@@ -28,44 +28,14 @@ const timezone = () => {
   }
 };
 
-const cacheTransport = new transports.File({
-  level: 'cache',
-  filename: './logs/cache.log',
-});
-
-const eventTransport = new transports.File({
-  level: 'event',
-  filename: './logs/event.log',
-});
-
-const errorTransport = new transports.File({
-  level: 'error',
-  filename: './logs/error.log',
-});
-
-const scriptTransport = new transports.File({
-  level: 'script',
-  filename: './logs/script.log',
-});
-
-const warnTransport = new transports.File({
-  level: 'warn',
-  filename: './logs/warn.log',
-});
-
-const otherTransport = new transports.File({
-  level: 'other',
-  filename: './logs/other.log',
-});
-
-const combinedTransport = new transports.File({
-  level: 'max',
-  filename: './logs/combined.log',
-});
-
-const consoleTransport = new transports.Console({
-  level: 'max',
-});
+const cacheTransport = new transports.File({ level: 'cache', filename: './logs/cache.log' });
+const eventTransport = new transports.File({ level: 'event', filename: './logs/event.log' });
+const errorTransport = new transports.File({ level: 'error', filename: './logs/error.log' });
+const scriptTransport = new transports.File({ level: 'script', filename: './logs/script.log' });
+const warnTransport = new transports.File({ level: 'warn', filename: './logs/warn.log' });
+const otherTransport = new transports.File({ level: 'other', filename: './logs/other.log' });
+const combinedTransport = new transports.File({ level: 'max', filename: './logs/combined.log' });
+const consoleTransport = new transports.Console({ level: 'max' });
 
 const cacheLogger = createLogger({
   level: 'cache',
@@ -166,7 +136,7 @@ export const updateMessage = () => {
   const message2 = 'Bot has updated, please restart the bot to apply changes!';
   const padding = ' '.repeat(Math.floor((columns - warning.length) / 2));
   const padding2 = ' '.repeat(Math.floor((columns - message2.length) / 2));
-  // eslint-disable-next-line
+  // eslint-disable-next-line no-console
   console.log(padding + warning + padding + '\n' + padding2 + message2 + padding2);
 };
 
