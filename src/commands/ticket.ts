@@ -99,7 +99,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       if (userTickets.success) {
         const openTickets = userTickets.tickets.filter((ticket) => ticket?.ticketInfo?.closed === null);
         if (openTickets.length >= 2) {
-          throw new Error(`You can only have 2 open tickets at a time`);
+          throw new Error('You can only have 2 open tickets at a time');
         }
       }
       const uuid = crypto.randomUUID();

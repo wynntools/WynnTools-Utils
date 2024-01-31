@@ -129,7 +129,7 @@ export const execute = async (interaction: Interaction) => {
           if (userTickets.success) {
             const openTickets = userTickets.tickets.filter((ticket) => ticket?.ticketInfo?.closed === null);
             if (openTickets.length >= 2) {
-              throw new Error(`You can only have 2 open tickets at a time`);
+              throw new Error('You can only have 2 open tickets at a time');
             }
           }
           const reason = 'No reason provided';
@@ -428,7 +428,7 @@ export const execute = async (interaction: Interaction) => {
               const errorEmbed = new EmbedBuilder()
                 .setColor(other.colors.red as ColorResolvable)
                 .setTitle('An error occurred')
-                .setDescription(`Error Info - \`${cleanMessage(error)}\``)
+                .setDescription(`Error Info - ${cleanMessage(error)}`)
                 .setFooter({ text: `by @kathund | ${discord.supportInvite} for support`, iconURL: other.logo });
               const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
                 new ButtonBuilder().setLabel('Support Discord').setURL(discord.supportInvite).setStyle(ButtonStyle.Link)
@@ -467,7 +467,7 @@ export const execute = async (interaction: Interaction) => {
           const errorEmbed = new EmbedBuilder()
             .setColor(other.colors.red as ColorResolvable)
             .setTitle('An error occurred')
-            .setDescription(`Error Info - \`${cleanMessage(error)}\``)
+            .setDescription(`Error Info - ${cleanMessage(error)}`)
             .setFooter({ text: `by @kathund | ${discord.supportInvite} for support`, iconURL: other.logo });
           const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
             new ButtonBuilder().setLabel('Support Discord').setURL(discord.supportInvite).setStyle(ButtonStyle.Link)

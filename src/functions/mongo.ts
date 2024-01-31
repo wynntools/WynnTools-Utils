@@ -40,16 +40,16 @@ const ticketSchema = new Schema({
   reason: { type: String, default: null },
 });
 
-const Ticket = model('Ticket', ticketSchema);
+const MongoTicket = model('Ticket', ticketSchema);
 
 export const saveTicket = async (ticket: Ticket): Promise<MongoResponse> => {
   try {
-    const ticketCheck = await Ticket.findOne({ uuid: ticket.uuid });
+    const ticketCheck = await MongoTicket.findOne({ uuid: ticket.uuid });
     if (ticketCheck) {
       return { success: false, info: 'Ticket already exists' };
     }
     ticket = sanitize(ticket);
-    const newUser = new Ticket(ticket);
+    const newUser = new MongoTicket(ticket);
     await newUser.save();
     return { success: true, info: 'Saved Ticket' };
   } catch (error: any) {
@@ -60,7 +60,7 @@ export const saveTicket = async (ticket: Ticket): Promise<MongoResponse> => {
 
 export const getTicket = async (uuid: string): Promise<MongoResponse> => {
   try {
-    const ticket = (await Ticket.findOne({ uuid: uuid })) as Ticket;
+    const ticket = (await MongoTicket.findOne({ uuid: uuid })) as Ticket;
     return { success: true, info: 'Got Ticket', ticket: ticket };
   } catch (error: any) {
     errorMessage(error);
@@ -70,7 +70,7 @@ export const getTicket = async (uuid: string): Promise<MongoResponse> => {
 
 export const getTicketByUser = async (userId: string) => {
   try {
-    const tickets = await Ticket.find({ 'ticketInfo.opened.by.id': userId });
+    const tickets = await MongoTicket.find({ 'ticketInfo.opened.by.id': userId });
     return { success: true, info: 'Got Tickets', tickets: tickets };
   } catch (error: any) {
     errorMessage(error);
@@ -80,7 +80,7 @@ export const getTicketByUser = async (userId: string) => {
 
 export const getTickets = async (): Promise<MongoResponse> => {
   try {
-    const tickets = (await Ticket.find({})) as Ticket[];
+    const tickets = (await MongoTicket.find({})) as Ticket[];
     return { success: true, info: 'Got Tickets', tickets: tickets };
   } catch (error: any) {
     errorMessage(error);
@@ -90,7 +90,7 @@ export const getTickets = async (): Promise<MongoResponse> => {
 
 export const updateTicket = async (ticket: Ticket): Promise<MongoResponse> => {
   try {
-    await Ticket.updateOne({ uuid: ticket.uuid }, ticket);
+    await MongoTicket.updateOne({ uuid: ticket.uuid }, ticket);
     return { success: true, info: 'Updated Ticket' };
   } catch (error: any) {
     errorMessage(error);
@@ -99,16 +99,16 @@ export const updateTicket = async (ticket: Ticket): Promise<MongoResponse> => {
 };
 
 const blacklistSchema = new Schema({ user: userSchema, timestamp: Number, by: userSchema, reason: String });
-const Blacklist = model('Blacklist', blacklistSchema);
+const MongoBlacklist = model('Blacklist', blacklistSchema);
 
 export const saveBlacklist = async (blacklist: Blacklist): Promise<MongoResponse> => {
   try {
-    const blacklistCheck = await Blacklist.findOne({ 'user.id': blacklist.user.id });
+    const blacklistCheck = await MongoBlacklist.findOne({ 'user.id': blacklist.user.id });
     if (blacklistCheck) {
       return { success: false, info: 'Blacklist already exists' };
     }
     blacklist = sanitize(blacklist);
-    const newUser = new Blacklist(blacklist);
+    const newUser = new MongoBlacklist(blacklist);
     await newUser.save();
     return { success: true, info: 'Saved Blacklist' };
   } catch (error: any) {
@@ -119,7 +119,7 @@ export const saveBlacklist = async (blacklist: Blacklist): Promise<MongoResponse
 
 export const getBlacklist = async (userId: string): Promise<MongoResponse> => {
   try {
-    const blacklist = (await Blacklist.findOne({ 'user.id': userId })) as Blacklist;
+    const blacklist = (await MongoBlacklist.findOne({ 'user.id': userId })) as Blacklist;
     return { success: true, info: 'Got Blacklist', blacklist: blacklist };
   } catch (error: any) {
     errorMessage(error);
@@ -129,7 +129,7 @@ export const getBlacklist = async (userId: string): Promise<MongoResponse> => {
 
 export const getBlacklists = async (): Promise<MongoResponse> => {
   try {
-    const blacklists = (await Blacklist.find({})) as Blacklist[];
+    const blacklists = (await MongoBlacklist.find({})) as Blacklist[];
     return { success: true, info: 'Got Blacklists', blacklists: blacklists };
   } catch (error: any) {
     errorMessage(error);
@@ -140,7 +140,7 @@ export const getBlacklists = async (): Promise<MongoResponse> => {
 export const updateBlacklist = async (blacklist: Blacklist): Promise<MongoResponse> => {
   try {
     blacklist = sanitize(blacklist);
-    await Blacklist.updateOne({ 'user.id': blacklist.user.id }, blacklist);
+    await MongoBlacklist.updateOne({ 'user.id': blacklist.user.id }, blacklist);
     return { success: true, info: 'Updated Blacklist' };
   } catch (error: any) {
     errorMessage(error);
@@ -151,7 +151,7 @@ export const updateBlacklist = async (blacklist: Blacklist): Promise<MongoRespon
 export const deleteBlacklist = async (userId: string): Promise<MongoResponse> => {
   try {
     userId = sanitize(userId);
-    await Blacklist.findOneAndDelete({ 'user.id': userId });
+    await MongoBlacklist.findOneAndDelete({ 'user.id': userId });
     return { success: true, info: 'Deleted Blacklist' };
   } catch (error: any) {
     errorMessage(error);

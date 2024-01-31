@@ -22,7 +22,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
       new ButtonBuilder().setLabel('invite').setURL(discord.botInvite).setStyle(ButtonStyle.Link)
     );
     const embed = new EmbedBuilder()
-      .setTitle(`WynnTools Utils Stats`)
+      .setTitle('WynnTools Utils Stats')
       .setColor(other.colors.green as ColorResolvable)
       .setTimestamp()
       .setDescription('WynnTools - A bot that does stuff with the wynncraft api - The Only bot that uses images **that i have seen**')
