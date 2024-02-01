@@ -123,13 +123,13 @@ export const execute = async (interaction: Interaction) => {
         if (interaction.customId === 'TICKET_OPEN') {
           await interaction.deferReply({ ephemeral: true });
           const blacklistCheck = await getBlacklist(interaction.user.id);
-          if (!blacklistCheck.success) throw new Error('You are blacklisted from opening tickets');
+          if (!blacklistCheck.success) throw new Error('NO_ERROR_ID_You are blacklisted from opening tickets');
           const userTickets = await getTicketByUser(interaction.user.id);
           if (!userTickets.tickets) throw new Error('Failed to get user tickets');
           if (userTickets.success) {
             const openTickets = userTickets.tickets.filter((ticket) => ticket?.ticketInfo?.closed === null);
             if (openTickets.length >= 2) {
-              throw new Error('You can only have 2 open tickets at a time');
+              throw new Error('NO_ERROR_ID_You can only have 2 open tickets at a time');
             }
           }
           const reason = 'No reason provided';
@@ -194,12 +194,12 @@ export const execute = async (interaction: Interaction) => {
           await interaction.followUp({ embeds: [ticketOpenedEmbed], ephemeral: true });
         } else if (interaction.customId.startsWith('TICKET_CLOSE_')) {
           if (!memberRoles.some((role) => ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role))) {
-            throw new Error('You do not have permission to use this command');
+            throw new Error('NO_ERROR_ID_You do not have permission to use this command');
           }
           await interaction.reply({ content: 'Closing ticket...', ephemeral: true });
           const reason = 'No reason provided';
           if (!(interaction.channel as TextChannel).name.toLowerCase().includes('ticket-')) {
-            throw new Error('This is not a ticket channel');
+            throw new Error('NO_ERROR_ID_This is not a ticket channel');
           }
           const messages = await (interaction.channel as TextChannel).messages.fetch();
           let changed = Array<Message>();
@@ -280,11 +280,11 @@ export const execute = async (interaction: Interaction) => {
           const ticket = (await getTicket(uuid)).ticket;
           if (!ticket) throw new Error('Failed to get ticket');
           if (interaction.user.id !== ticket.ticketInfo.opened.by.id) {
-            throw new Error('You did not open this ticket');
+            throw new Error('NO_ERROR_ID_You did not open this ticket');
           }
           const reason = ticket.reason;
           if (!(interaction.channel as TextChannel).name.toLowerCase().includes('ticket-')) {
-            throw new Error('This is not a ticket channel');
+            throw new Error('NO_ERROR_ID_This is not a ticket channel');
           }
           const messages = await (interaction.channel as TextChannel).messages.fetch();
           let changed = Array<Message>();
@@ -351,10 +351,10 @@ export const execute = async (interaction: Interaction) => {
           const ticket = (await getTicket(uuid)).ticket;
           if (!ticket) throw new Error('Failed to get ticket');
           if (interaction.user.id !== ticket.ticketInfo.opened.by.id) {
-            throw new Error('You did not open this ticket');
+            throw new Error('NO_ERROR_ID_You did not open this ticket');
           }
           if (!(interaction.channel as TextChannel).name.toLowerCase().includes('ticket-')) {
-            throw new Error('This is not a ticket channel');
+            throw new Error('NO_ERROR_ID_This is not a ticket channel');
           }
           const responseEmbed = new EmbedBuilder()
             .setColor(other.colors.red as ColorResolvable)
