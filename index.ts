@@ -4,12 +4,7 @@ import { execute } from './src/events/ready';
 import { discord } from './config.json';
 
 const client = new Client({
-  intents: [
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.Guilds,
-  ],
+  intents: [GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.Guilds],
 });
 
 deployCommands(client);

@@ -1,10 +1,5 @@
-import { readJson, writeJson } from 'fs-extra';
-import { dirname as getDirName } from 'path';
 import { other } from '../../config.json';
 import { errorMessage } from './logger';
-import { readFileSync } from 'fs';
-import { set } from 'lodash';
-import { sync } from 'mkdirp';
 
 export const generateID = (length: number) => {
   try {
@@ -25,42 +20,7 @@ export const getCurrentTime = () => {
     if (other.timezone === null) {
       return new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
     } else {
-      return new Date().toLocaleString('en-US', {
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true,
-        timeZone: other.timezone,
-      });
-    }
-  } catch (error: any) {
-    const errorId = generateID(other.errorIdLength);
-    errorMessage(`Error Id - ${errorId}`);
-    errorMessage(error);
-    return error;
-  }
-};
-
-export const writeAt = async (filePath: string, jsonPath: string, value: any) => {
-  try {
-    sync(getDirName(filePath));
-    const json = await readJson(filePath);
-    set(json, jsonPath, value);
-    return await writeJson(filePath, json);
-  } catch (error: any) {
-    errorMessage(error);
-    const json_1 = {};
-    set(json_1, jsonPath, value);
-    return await writeJson(filePath, json_1);
-  }
-};
-
-export const blacklistCheck = async (id: string) => {
-  try {
-    const blacklist = await JSON.parse(readFileSync('data/blacklist.json', 'utf8'));
-    if (blacklist[id]) {
-      return true;
-    } else {
-      return false;
+      return new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true, timeZone: other.timezone });
     }
   } catch (error: any) {
     const errorId = generateID(other.errorIdLength);
@@ -75,14 +35,12 @@ export const toFixed = (num: any, fixed: number) => {
     if (fixed === undefined) fixed = 0;
     const response = new RegExp('^-?\\d+(?:\\.\\d{0,' + (fixed || -1) + '})?');
     const result = num.toString().match(response)[0];
-
     const parts = result.split('.');
     if (parts.length === 1 && fixed > 0) {
       parts.push('0'.repeat(fixed));
     } else if (parts.length === 2 && parts[1].length < fixed) {
       parts[1] = parts[1] + '0'.repeat(fixed - parts[1].length);
     }
-
     return parts.join('.');
   } catch (error: any) {
     const errorId = generateID(other.errorIdLength);
@@ -128,15 +86,6 @@ export const convertChannelType = (type: number) => {
   }
 };
 
-export const isTicketBlacklisted = (userID: string, ticketBlacklist: any) => {
-  for (const user of ticketBlacklist) {
-    if (user.user === userID) {
-      return true;
-    }
-  }
-  return false;
-};
-
 export const removeFromArray = (array: any, id: string) => {
   try {
     const index = array.findIndex((obj: any) => obj.user === id);
@@ -148,16 +97,4 @@ export const removeFromArray = (array: any, id: string) => {
     errorMessage(error);
     return error;
   }
-};
-
-export default {
-  generateID,
-  getCurrentTime,
-  writeAt,
-  blacklistCheck,
-  toFixed,
-  cleanMessage,
-  convertChannelType,
-  isTicketBlacklisted,
-  removeFromArray,
 };

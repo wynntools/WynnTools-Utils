@@ -1,9 +1,14 @@
 import {
+  ModalActionRowComponentBuilder,
   PermissionFlagsBits,
+  TextInputBuilder,
   ActionRowBuilder,
   ColorResolvable,
+  InteractionType,
+  TextInputStyle,
   ButtonBuilder,
   EmbedBuilder,
+  ModalBuilder,
   ButtonStyle,
   ChannelType,
   GuildMember,
@@ -12,20 +17,28 @@ import {
   Events,
   Guild,
 } from 'discord.js';
-import { isTicketBlacklisted, blacklistCheck, cleanMessage, generateID, writeAt, toFixed } from '../functions/helper';
+import { getBlacklist, getTicket, getTicketByUser, saveTicket, updateTicket } from '../functions/mongo';
+import { cleanMessage, generateID, toFixed } from '../functions/helper';
 import { eventMessage, errorMessage } from '../functions/logger';
-import { other, discord, api } from '../../config.json';
-import { arrayMessages } from '../types/main';
-import { readFileSync } from 'fs';
-import axios from 'axios';
+import { other, discord } from '../../config.json';
+import { Message } from '../types/main';
+
+const permissions = [
+  PermissionFlagsBits.ReadMessageHistory,
+  PermissionFlagsBits.UseExternalEmojis,
+  PermissionFlagsBits.SendMessages,
+  PermissionFlagsBits.ViewChannel,
+  PermissionFlagsBits.AttachFiles,
+  PermissionFlagsBits.AddReactions,
+  PermissionFlagsBits.EmbedLinks,
+];
 
 export const name = Events.InteractionCreate;
-
 export const execute = async (interaction: Interaction) => {
   try {
-    const memberRoles = (
-      (await (interaction.guild as Guild).members.fetch(interaction.user.id)) as GuildMember
-    ).roles.cache.map((role) => role.id);
+    const memberRoles = ((await (interaction.guild as Guild).members.fetch(interaction.user.id)) as GuildMember).roles.cache.map(
+      (role) => role.id
+    );
     if (interaction.isChatInputCommand()) {
       const command = interaction.client.commands.get(interaction.commandName);
       if (!command) return;
@@ -74,113 +87,25 @@ export const execute = async (interaction: Interaction) => {
             }
           }
           eventMessage(
-            `Interaction Event trigged by ${
-              interaction.user.discriminator == '0'
-                ? interaction.user.username
-                : `${interaction.user.username}#${interaction.user.discriminator}`
-            } (${interaction.user.id}) ran command ${commandString} in ${(interaction.guild as Guild).id} in ${
-              (interaction.channel as TextChannel).id
-            }`
+            `Interaction Event trigged by ${interaction.user.discriminator == '0' ? interaction.user.username : `${interaction.user.username}#${interaction.user.discriminator}`} (${interaction.user.id}) ran command ${commandString} in ${(interaction.guild as Guild).id} in ${(interaction.channel as TextChannel).id}`
           );
         } catch (error: any) {
           const errorIdLogger = generateID(other.errorIdLength);
           errorMessage(`Error ID: ${errorIdLogger}`);
           errorMessage(error);
         }
-
-        if (other.devMode) {
-          if (!memberRoles.some((role) => ([discord.roles.dev] as string[]).includes(role))) {
-            throw new Error('You do not have permission to use this command');
-          }
-        }
-
-        try {
-          if (!discord.channels.noCommandTracking.includes((interaction.channel as TextChannel).id)) {
-            const userData = JSON.parse(readFileSync('data/userData.json') as any);
-            let data;
-            if (userData[interaction.user.id]) {
-              data = {
-                commandsRun: userData[interaction.user.id].commandsRun + 1,
-                firstCommand: userData[interaction.user.id].firstCommand,
-                lastUpdated: toFixed(new Date().getTime() / 1000, 0),
-                commands: userData[interaction.user.id].commands,
-              };
-              const commands = data.commands;
-              if (commands[interaction.commandName]) {
-                commands[interaction.commandName]++;
-              } else {
-                commands[interaction.commandName] = 1;
-              }
-              await writeAt('data/userData.json', interaction.user.id, data);
-            } else {
-              data = {
-                commandsRun: 1,
-                firstCommand: toFixed(new Date().getTime() / 1000, 0),
-                lastUpdated: toFixed(new Date().getTime() / 1000, 0),
-                commands: { [interaction.commandName]: 1 },
-              };
-              await writeAt('data/userData.json', interaction.user.id, data);
-            }
-          }
-        } catch (error: any) {
-          const errorIdLogUserData = generateID(other.errorIdLength);
-          errorMessage(`Error ID: ${errorIdLogUserData}`);
-          errorMessage(error);
-        }
-        try {
-          const blacklistTest = await blacklistCheck(interaction.user.id);
-          if (blacklistTest) {
-            const blacklisted = new EmbedBuilder()
-              .setColor(other.colors.red.hex as ColorResolvable)
-              .setDescription('You are blacklisted')
-              .setFooter({
-                text: `by @kathund | ${discord.supportInvite} for support`,
-                iconURL: other.logo,
-              });
-            return await interaction.reply({ embeds: [blacklisted], ephemeral: true });
-          }
-          await command.execute(interaction);
-        } catch (error: any) {
-          const errorIdBlacklistCheck = generateID(other.errorIdLength);
-          errorMessage(`Error ID: ${errorIdBlacklistCheck}`);
-          errorMessage(error);
-          const errorEmbed = new EmbedBuilder()
-            .setColor(other.colors.red.hex as ColorResolvable)
-            .setTitle('An error occurred')
-            .setDescription(
-              `Use </report-bug:${
-                discord.commands['report-bug']
-              }> to report it\nError id - ${errorIdBlacklistCheck}\nError Info - \`${cleanMessage(error)}\``
-            )
-            .setFooter({
-              text: `by @kathund | ${discord.supportInvite} for support`,
-              iconURL: other.logo,
-            });
-          const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            new ButtonBuilder().setLabel('Support Discord').setURL(discord.supportInvite).setStyle(ButtonStyle.Link)
-          );
-          if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ embeds: [errorEmbed], components: [row], ephemeral: true });
-          } else {
-            await interaction.reply({ embeds: [errorEmbed], components: [row], ephemeral: true });
-          }
-        }
+        await command.execute(interaction);
       } catch (error: any) {
         const errorIdCheck = generateID(other.errorIdLength);
         errorMessage(`Error ID: ${errorIdCheck}`);
         errorMessage(error);
         const errorEmbed = new EmbedBuilder()
-          .setColor(other.colors.red.hex as ColorResolvable)
+          .setColor(other.colors.red as ColorResolvable)
           .setTitle('An error occurred')
           .setDescription(
-            `Use </report-bug:${
-              discord.commands['report-bug']
-            }> to report it\nError id - ${errorIdCheck}\nError Info - \`${cleanMessage(error)}\``
+            `Use </report-bug:${discord.commands['report-bug']}> to report it\nError id - ${errorIdCheck}\nError Info - \`${cleanMessage(error)}\``
           )
-          .setFooter({
-            text: `by @kathund | ${discord.supportInvite} for support`,
-            iconURL: other.logo,
-          });
+          .setFooter({ text: `by @kathund | ${discord.supportInvite} for support`, iconURL: other.logo });
         const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
           new ButtonBuilder().setLabel('Support Discord').setURL(discord.supportInvite).setStyle(ButtonStyle.Link)
         );
@@ -193,530 +118,318 @@ export const execute = async (interaction: Interaction) => {
     } else if (interaction.isButton()) {
       try {
         eventMessage(
-          `Interaction Event trigged by ${
-            interaction.user.discriminator == '0'
-              ? interaction.user.username
-              : `${interaction.user.username}#${interaction.user.discriminator}`
-          } (${interaction.user.id}) clicked button ${interaction.customId} in ${(interaction.guild as Guild).id} in ${
-            (interaction.channel as TextChannel).id
-          } at ${interaction.message.id}`
+          `Interaction Event trigged by ${interaction.user.discriminator == '0' ? interaction.user.username : `${interaction.user.username}#${interaction.user.discriminator}`} (${interaction.user.id}) clicked button ${interaction.customId} in ${(interaction.guild as Guild).id} in ${(interaction.channel as TextChannel).id} at ${interaction.message.id}`
         );
-        const tickets = JSON.parse(readFileSync('data/tickets.json') as any);
         if (interaction.customId === 'TICKET_OPEN') {
           await interaction.deferReply({ ephemeral: true });
+          const blacklistCheck = await getBlacklist(interaction.user.id);
+          if (!blacklistCheck.success) throw new Error('NO_ERROR_ID_You are blacklisted from opening tickets');
+          const userTickets = await getTicketByUser(interaction.user.id);
+          if (!userTickets.tickets) throw new Error('Failed to get user tickets');
+          if (userTickets.success) {
+            const openTickets = userTickets.tickets.filter((ticket) => ticket?.ticketInfo?.closed === null);
+            if (openTickets.length >= 2) {
+              throw new Error('NO_ERROR_ID_You can only have 2 open tickets at a time');
+            }
+          }
           const reason = 'No reason provided';
-          const ticketId = (generateID(other.ticketIdLength) as string).toLowerCase();
-          const channel = await (interaction.guild as Guild).channels.create({
-            name: `ticket-${interaction.user.username}-${ticketId}`,
+          const uuid = crypto.randomUUID();
+          const channel = (await interaction?.guild?.channels.create({
+            name: `ticket-${interaction.user.username}`,
             type: ChannelType.GuildText,
+            parent: discord.categories.tickets,
             permissionOverwrites: [
-              {
-                id: interaction.user.id,
-                allow: [
-                  PermissionFlagsBits.ReadMessageHistory,
-                  PermissionFlagsBits.UseExternalEmojis,
-                  PermissionFlagsBits.SendMessages,
-                  PermissionFlagsBits.ViewChannel,
-                  PermissionFlagsBits.AttachFiles,
-                  PermissionFlagsBits.AddReactions,
-                  PermissionFlagsBits.EmbedLinks,
-                ],
-              },
-              {
-                id: (interaction.guild as Guild).roles.everyone.id,
-                deny: [
-                  PermissionFlagsBits.ReadMessageHistory,
-                  PermissionFlagsBits.UseExternalEmojis,
-                  PermissionFlagsBits.SendMessages,
-                  PermissionFlagsBits.ViewChannel,
-                  PermissionFlagsBits.AttachFiles,
-                  PermissionFlagsBits.AddReactions,
-                  PermissionFlagsBits.EmbedLinks,
-                ],
-              },
-              {
-                id: discord.roles.dev,
-                allow: [
-                  PermissionFlagsBits.ReadMessageHistory,
-                  PermissionFlagsBits.UseExternalEmojis,
-                  PermissionFlagsBits.SendMessages,
-                  PermissionFlagsBits.ViewChannel,
-                  PermissionFlagsBits.AttachFiles,
-                  PermissionFlagsBits.AddReactions,
-                  PermissionFlagsBits.EmbedLinks,
-                ],
-              },
-              {
-                id: discord.roles.admin,
-                allow: [
-                  PermissionFlagsBits.ReadMessageHistory,
-                  PermissionFlagsBits.UseExternalEmojis,
-                  PermissionFlagsBits.SendMessages,
-                  PermissionFlagsBits.ViewChannel,
-                  PermissionFlagsBits.AttachFiles,
-                  PermissionFlagsBits.AddReactions,
-                  PermissionFlagsBits.EmbedLinks,
-                ],
-              },
-              {
-                id: discord.roles.mod,
-                allow: [
-                  PermissionFlagsBits.ReadMessageHistory,
-                  PermissionFlagsBits.UseExternalEmojis,
-                  PermissionFlagsBits.SendMessages,
-                  PermissionFlagsBits.ViewChannel,
-                  PermissionFlagsBits.AttachFiles,
-                  PermissionFlagsBits.AddReactions,
-                  PermissionFlagsBits.EmbedLinks,
-                ],
-              },
+              { id: interaction.user.id, allow: permissions },
+              { id: (interaction.guild as Guild).roles.everyone.id, deny: permissions },
+              { id: discord.roles.dev, allow: permissions },
+              { id: discord.roles.admin, allow: permissions },
+              { id: discord.roles.mod, allow: permissions },
             ],
+          })) as TextChannel;
+          const savedTicket = await saveTicket({
+            uuid: uuid,
+            ticketInfo: {
+              name: channel.name,
+              channelId: channel.id,
+              opened: {
+                timestamp: toFixed(channel.createdTimestamp / 1000, 0),
+                reason: reason,
+                by: {
+                  username: interaction.user.username,
+                  id: interaction.user.id,
+                  displayName: interaction.user.displayName,
+                  avatar: interaction.user.displayAvatarURL(),
+                  bot: interaction.user.bot,
+                },
+              },
+              closed: null,
+              users: [],
+            },
+            messages: [],
+            reason: null,
           });
-
-          await writeAt('data/tickets.json', ticketId, {
-            user: interaction.user.id,
-            username: interaction.user.username,
-            channel: channel.id,
-            channelName: `ticket-${interaction.user.username}-${ticketId}`,
-            ticketId: ticketId,
-            reason: reason,
-            createdAt: toFixed(new Date().getTime() / 1000, 0),
-          });
-          await writeAt('data/tickets.json', 'total', tickets.total + 1);
-
+          if (!savedTicket.success) throw new Error('Failed to save ticket');
           const ticketEmbed = new EmbedBuilder()
-            .setColor(other.colors.red.hex as ColorResolvable)
+            .setColor(other.colors.cherryBlossomPink as ColorResolvable)
             .setTitle('Ticket Opened')
-            .setDescription(`Ticket opened by ${interaction.user.tag} (${interaction.user.id})`)
-            .addFields({
-              name: 'Reason',
-              value: reason,
-              inline: false,
-            })
+            .setDescription(`Ticket opened by ${interaction.user.tag} (${interaction.user.id})\n\nReason: ${reason}`)
             .setTimestamp()
-            .setFooter({
-              text: `by @kathund | ${discord.supportInvite} for support`,
-              iconURL: other.logo,
-            });
-
+            .setFooter({ text: `by @kathund | ${discord.supportInvite} for support`, iconURL: other.logo });
           const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            new ButtonBuilder()
-              .setLabel('Close Ticket')
-              .setCustomId(`TICKET_CLOSE_${channel.id}_${interaction.user.id}_${ticketId}`)
-              .setStyle(ButtonStyle.Danger),
-            new ButtonBuilder()
-              .setLabel('Close Ticket and Ban User')
-              .setCustomId(`TICKET_BAN_CLOSE_${channel.id}_${interaction.user.id}_${ticketId}`)
-              .setStyle(ButtonStyle.Danger)
+            new ButtonBuilder().setLabel('Close Ticket').setCustomId(`TICKET_CLOSE_${uuid}`).setStyle(ButtonStyle.Danger),
+            new ButtonBuilder().setLabel('Close Ticket With Reason').setCustomId(`TICKET_REASON_${uuid}`).setStyle(ButtonStyle.Danger)
           );
-
-          await channel.send({ content: `<@${interaction.user.id}>`, embeds: [ticketEmbed], components: [row] });
+          await channel.send({ content: `<@${interaction.user.id}> | ${uuid}`, embeds: [ticketEmbed], components: [row] });
           await channel.send({ content: `<@&${discord.roles.mod}>` });
           const ticketChannelMessages = await channel.messages.fetch();
           ticketChannelMessages.forEach(async (message) => {
             if (message.author.id !== interaction.client.user.id) return;
-            if (message.content === `<@&${discord.roles.mod}>`) return await message.delete();
-            if (message.content === `<@${interaction.user.id}>`) return await message.pin();
+            if (message.content === `<@&${discord.roles.mod}>`) await message.delete();
+            if (message.content === `<@${interaction.user.id}> | ${uuid}`) await message.pin();
           });
           const ticketOpenedEmbed = new EmbedBuilder()
-            .setColor(other.colors.red.hex as ColorResolvable)
+            .setColor(other.colors.cherryBlossomPink as ColorResolvable)
             .setTitle('Ticket Opened')
             .setDescription(`Your ticket has been opened in <#${channel.id}>`);
           await interaction.followUp({ embeds: [ticketOpenedEmbed], ephemeral: true });
         } else if (interaction.customId.startsWith('TICKET_CLOSE_')) {
-          const channelId = interaction.customId.split('_')[2];
-          if ((interaction.channel as TextChannel).id !== channelId) return;
-          if (
-            !memberRoles.some((role) =>
-              ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role)
-            )
-          ) {
-            throw new Error('You do not have permission to use this command');
+          if (!memberRoles.some((role) => ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role))) {
+            throw new Error('NO_ERROR_ID_You do not have permission to use this command');
           }
-          const reason = 'No reason provided';
-          if (!(interaction.channel as TextChannel).name.includes('ticket-')) {
-            throw new Error('This is not a ticket channel');
-          }
-          const ticketId = interaction.customId.split('_')[4];
-          const ticket = tickets[ticketId];
-          const messages = await (interaction.channel as TextChannel).messages.fetch();
-          let changed = Array<arrayMessages>();
-          messages.forEach((message) => {
-            changed.push({
-              timestamp: message.createdTimestamp,
-              content: message.content,
-              user: message.author.id,
-              username: message.author.username,
-              avatar: message.author.avatar || null,
-              bot: message.author.bot,
-              displayName: message.author.displayName,
-            });
-          });
-          changed = changed.sort((a, b) => a.timestamp - b.timestamp);
-          const data = {
-            ticket: {
-              id: ticketId,
-              opened: {
-                timestamp: ticket.createdAt,
-                reason: ticket.reason,
-                by: {
-                  id: ticket.user,
-                  username: ticket.username,
-                },
-              },
-              closed: {
-                by: {
-                  id: interaction.user.id,
-                  username: interaction.user.username,
-                },
-                reason: reason,
-                timestamp: toFixed(new Date().getTime() / 1000, 0),
-              },
-            },
-            messages: changed,
-          };
-          const res = await axios.post(`${api.transcripts.url}/transcript/save`, data, {
-            headers: { 'Content-Type': 'application/json', key: api.transcripts.key },
-          });
-          if (res.status != 201) throw new Error('Error creating transcript');
-          if (!ticket) throw new Error('Ticket not found? Please report this!');
           await interaction.reply({ content: 'Closing ticket...', ephemeral: true });
-          const userCloseEmbed = new EmbedBuilder()
-            .setColor(other.colors.red.hex as ColorResolvable)
-            .setTitle('Ticket Closed')
-            .setDescription(`Your ticket has been closed by <@${interaction.user.id}>`)
-            .addFields(
-              {
-                name: 'Reason',
-                value: reason,
-                inline: false,
-              },
-              {
-                name: 'Ticket ID',
-                value: ticketId,
-                inline: true,
-              },
-              {
-                name: 'Ticket Opened',
-                value: `<t:${ticket.createdAt}:R>`,
-                inline: true,
-              },
-              {
-                name: 'Ticket Opened By',
-                value: `${ticketId}`,
-                inline: true,
-              },
-              {
-                name: 'Transcript',
-                value: `https://tickets.kath.lol/${ticketId}.txt`,
-                inline: true,
-              }
-            )
-            .setTimestamp()
-            .setFooter({
-              text: `by @kathund | ${discord.supportInvite} for support`,
-              iconURL: other.logo,
-            });
-
-          const closedLoggingEmbed = new EmbedBuilder()
-            .setColor(other.colors.red.hex as ColorResolvable)
-            .setTitle('Ticket Closed')
-            .setDescription(`Ticket closed by <@${interaction.user.id}>`)
-            .addFields(
-              {
-                name: 'Reason',
-                value: reason,
-                inline: false,
-              },
-              {
-                name: 'Ticket ID',
-                value: ticketId,
-                inline: true,
-              },
-              {
-                name: 'Ticket Opened',
-                value: `<t:${ticket.createdAt}:R>`,
-                inline: true,
-              },
-              {
-                name: 'Ticket Opened By',
-                value: `<@${ticket.user}>`,
-                inline: true,
-              },
-              {
-                name: 'Transcript',
-                value: `https://tickets.kath.lol/${ticketId}.txt`,
-                inline: true,
-              }
-            )
-            .setTimestamp()
-            .setFooter({
-              text: `by @kathund | ${discord.supportInvite} for support`,
-              iconURL: other.logo,
-            });
-          const loggingChannel = (interaction.guild as Guild).channels.cache.get(
-            discord.channels.ticketLogging
-          ) as TextChannel;
-          if (!loggingChannel) throw new Error('Ticket logging channel not found? Please report this!');
-          await loggingChannel.send({ embeds: [closedLoggingEmbed] });
-          await interaction.client.users.send(ticket.user, { embeds: [userCloseEmbed] });
-          await (interaction.channel as TextChannel).delete();
-        } else if (interaction.customId.startsWith('TICKET_BAN_CLOSE_')) {
-          const channelId = interaction.customId.split('_')[3];
-          const userId = interaction.customId.split('_')[4];
-          if ((interaction.channel as TextChannel).id !== channelId) return;
-          if (
-            !memberRoles.some((role) =>
-              ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role)
-            )
-          ) {
-            throw new Error('You do not have permission to use this command');
-          }
           const reason = 'No reason provided';
-          if (!(interaction.channel as TextChannel).name.includes('ticket-')) {
-            throw new Error('This is not a ticket channel');
+          if (!(interaction.channel as TextChannel).name.toLowerCase().includes('ticket-')) {
+            throw new Error('NO_ERROR_ID_This is not a ticket channel');
           }
-          const ticketBlacklist = tickets.blacklist;
-          if (isTicketBlacklisted(userId, ticketBlacklist)) {
-            throw new Error('User already blacklisted from tickets');
-          }
-          ticketBlacklist.push({
-            user: userId,
-            reason: reason,
-            blacklistedAt: toFixed(new Date().getTime() / 1000, 0),
-          });
-          await writeAt('data/tickets.json', 'blacklist', ticketBlacklist);
-
-          const userBanEmbed = new EmbedBuilder()
-            .setColor(other.colors.red.hex as ColorResolvable)
-            .setTitle('Ticket Blacklisted')
-            .setDescription(`Successfully blacklisted <@${userId}> from tickets`)
-            .setTimestamp()
-            .setFooter({
-              text: `by @kathund | ${discord.supportInvite} for support`,
-              iconURL: other.logo,
-            });
-
-          await interaction.reply({ embeds: [userBanEmbed], ephemeral: true });
-
-          const ticketId = interaction.customId.split('_')[5];
-          const ticket = tickets[ticketId];
-          if (!ticket) throw new Error('Ticket not found? Please report this!');
           const messages = await (interaction.channel as TextChannel).messages.fetch();
-          let changed = Array<arrayMessages>();
+          let changed = Array<Message>();
           messages.forEach((message) => {
             changed.push({
-              timestamp: message.createdTimestamp,
+              author: {
+                username: message.author.username,
+                id: message.author.id,
+                displayName: message.author.displayName,
+                avatar: message.author.avatarURL(),
+                bot: message.author.bot,
+              },
               content: message.content,
-              user: message.author.id,
-              username: message.author.username,
-              avatar: message.author.avatar || null,
-              bot: message.author.bot,
-              displayName: message.author.displayName,
+              timestamp: message.createdTimestamp,
             });
           });
           changed = changed.sort((a, b) => a.timestamp - b.timestamp);
-          const data = {
-            ticket: {
-              id: ticketId,
-              opened: {
-                timestamp: ticket.createdAt,
-                reason: ticket.reason,
-                by: {
-                  id: ticket.user,
-                  username: ticket.username,
+          const uuid = interaction.customId.split('TICKET_CLOSE_')[1];
+          const ticket = (await getTicket(uuid)).ticket;
+          if (!ticket) throw new Error('Failed to get ticket');
+          if (ticket.ticketInfo.closed === null) {
+            const update = await updateTicket({
+              uuid: uuid,
+              ticketInfo: {
+                name: (interaction.channel as TextChannel).name,
+                channelId: (interaction.channel as TextChannel).id,
+                opened: ticket.ticketInfo.opened,
+                closed: {
+                  timestamp: toFixed(new Date().getTime() / 1000, 0),
+                  reason: reason,
+                  by: {
+                    username: interaction.user.username,
+                    id: interaction.user.id,
+                    displayName: interaction.user.displayName,
+                    avatar: interaction.user.avatarURL(),
+                    bot: interaction.user.bot,
+                  },
                 },
+                users: ticket.ticketInfo.users,
               },
-              closed: {
-                by: {
-                  id: interaction.user.id,
-                  username: interaction.user.username,
-                },
-                reason: reason,
-                timestamp: toFixed(new Date().getTime() / 1000, 0),
+              messages: changed,
+              reason: null,
+            });
+            if (!update.success) throw new Error('Failed to save ticket');
+            const closeEmbed = new EmbedBuilder()
+              .setColor(other.colors.red as ColorResolvable)
+              .setTitle('Ticket Closed')
+              .addFields(
+                { name: 'Reason', value: reason, inline: true },
+                { name: 'Ticket ID', value: uuid, inline: true },
+                { name: 'Transcript', value: `https://tickets.kath.lol/${uuid}`, inline: true },
+                { name: 'Ticket Opened', value: `<t:${ticket.ticketInfo.opened.timestamp}:R>`, inline: true },
+                { name: 'Ticket Opened By', value: `<@${ticket.ticketInfo.opened.by.id}>`, inline: true },
+                { name: 'Ticket Closed', value: `<t:${toFixed(new Date().getTime() / 1000, 0)}:R>`, inline: true },
+                { name: 'Ticket Closed By', value: `<@${interaction.user.id}>`, inline: true }
+              )
+              .setTimestamp()
+              .setFooter({ text: `by @kathund | ${discord.supportInvite} for support`, iconURL: other.logo });
+            const loggingChannel = (interaction.guild as Guild).channels.cache.get(discord.channels.ticketLogging) as TextChannel;
+            if (!loggingChannel) throw new Error('Ticket logging channel not found? Please report this!');
+            await loggingChannel.send({ embeds: [closeEmbed] });
+            await interaction.client.users.send(ticket.ticketInfo.opened.by.id, { embeds: [closeEmbed] });
+            await (interaction.channel as TextChannel).delete();
+          }
+        } else if (interaction.customId.startsWith('TICKET_REASON_')) {
+          const uuid = interaction.customId.split('TICKET_REASON_')[1];
+          const modal = new ModalBuilder().setCustomId(`CLOSE_INPUT_${uuid}`).setTitle('Close Reason');
+          const reasonInput = new TextInputBuilder()
+            .setCustomId('REASON')
+            .setLabel('Close Reason')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+          const reason = new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(reasonInput);
+          modal.addComponents(reason);
+          await interaction.showModal(modal);
+        } else if (interaction.customId.startsWith('TICKET_ACCEPT_')) {
+          const uuid = interaction.customId.split('TICKET_ACCEPT_')[1];
+          const ticket = (await getTicket(uuid)).ticket;
+          if (!ticket) throw new Error('Failed to get ticket');
+          if (interaction.user.id !== ticket.ticketInfo.opened.by.id) {
+            throw new Error('NO_ERROR_ID_You did not open this ticket');
+          }
+          const reason = ticket.reason;
+          if (!(interaction.channel as TextChannel).name.toLowerCase().includes('ticket-')) {
+            throw new Error('NO_ERROR_ID_This is not a ticket channel');
+          }
+          const messages = await (interaction.channel as TextChannel).messages.fetch();
+          let changed = Array<Message>();
+          messages.forEach((message) => {
+            changed.push({
+              author: {
+                username: message.author.username,
+                id: message.author.id,
+                displayName: message.author.displayName,
+                avatar: message.author.avatarURL(),
+                bot: message.author.bot,
               },
-            },
-            messages: changed,
-          };
-          const res = await axios.post(`${api.transcripts.url}/transcript/save`, data, {
-            headers: { 'Content-Type': 'application/json', key: api.transcripts.key },
+              content: message.content,
+              timestamp: message.createdTimestamp,
+            });
           });
-          if (res.status != 201) throw new Error('Error creating transcript');
-          await interaction.followUp({ content: 'Closing ticket...', ephemeral: true });
-          const userCloseEmbed = new EmbedBuilder()
-            .setColor(other.colors.red.hex as ColorResolvable)
-            .setTitle('Ticket Closed')
-            .setDescription(`Your ticket has been closed by <@${interaction.user.id}>`)
-            .addFields(
-              {
-                name: 'Reason',
-                value: reason,
-                inline: false,
+          changed = changed.sort((a, b) => a.timestamp - b.timestamp);
+          if (ticket.ticketInfo.closed === null) {
+            const update = await updateTicket({
+              uuid: uuid,
+              ticketInfo: {
+                name: (interaction.channel as TextChannel).name,
+                channelId: (interaction.channel as TextChannel).id,
+                opened: ticket.ticketInfo.opened,
+                closed: {
+                  timestamp: toFixed(new Date().getTime() / 1000, 0),
+                  reason: reason,
+                  by: {
+                    username: interaction.user.username,
+                    id: interaction.user.id,
+                    displayName: interaction.user.displayName,
+                    avatar: interaction.user.avatarURL(),
+                    bot: interaction.user.bot,
+                  },
+                },
+                users: ticket.ticketInfo.users,
               },
-              {
-                name: 'Ticket ID',
-                value: ticketId,
-                inline: true,
-              },
-              {
-                name: 'Ticket Opened',
-                value: `<t:${ticket.createdAt}:R>`,
-                inline: true,
-              },
-              {
-                name: 'Ticket Opened By',
-                value: `${ticketId}`,
-                inline: true,
-              },
-              {
-                name: 'Transcript',
-                value: `https://tickets.kath.lol/${ticketId}.txt`,
-                inline: true,
-              }
-            )
-            .setTimestamp()
-            .setFooter({
-              text: `by @kathund | ${discord.supportInvite} for support`,
-              iconURL: other.logo,
+              messages: changed,
+              reason: null,
             });
-
-          const closedLoggingEmbed = new EmbedBuilder()
-            .setColor(other.colors.red.hex as ColorResolvable)
-            .setTitle('Ticket Closed')
-            .setDescription(`Ticket closed by <@${interaction.user.id}>`)
-            .addFields(
-              {
-                name: 'Reason',
-                value: reason,
-                inline: false,
-              },
-              {
-                name: 'Ticket ID',
-                value: ticketId,
-                inline: true,
-              },
-              {
-                name: 'Ticket Opened',
-                value: `<t:${ticket.createdAt}:R>`,
-                inline: true,
-              },
-              {
-                name: 'Ticket Opened By',
-                value: `<@${ticket.user}>`,
-                inline: true,
-              },
-              {
-                name: 'Transcript',
-                value: `https://tickets.kath.lol/${ticketId}.txt`,
-                inline: true,
-              }
-            )
+            if (!update.success) throw new Error('Failed to save ticket');
+            const closeEmbed = new EmbedBuilder()
+              .setColor(other.colors.red as ColorResolvable)
+              .setTitle('Ticket Closed')
+              .addFields(
+                { name: 'Reason', value: `${reason}`, inline: true },
+                { name: 'Ticket ID', value: uuid, inline: true },
+                { name: 'Transcript', value: `https://tickets.kath.lol/${uuid}`, inline: true },
+                { name: 'Ticket Opened', value: `<t:${ticket.ticketInfo.opened.timestamp}:R>`, inline: true },
+                { name: 'Ticket Opened By', value: `<@${ticket.ticketInfo.opened.by.id}>`, inline: true },
+                { name: 'Ticket Closed', value: `<t:${toFixed(new Date().getTime() / 1000, 0)}:R>`, inline: true },
+                { name: 'Ticket Closed By', value: `<@${interaction.user.id}>`, inline: true }
+              )
+              .setTimestamp()
+              .setFooter({ text: `by @kathund | ${discord.supportInvite} for support`, iconURL: other.logo });
+            const loggingChannel = (interaction.guild as Guild).channels.cache.get(discord.channels.ticketLogging) as TextChannel;
+            if (!loggingChannel) throw new Error('Ticket logging channel not found? Please report this!');
+            await loggingChannel.send({ embeds: [closeEmbed] });
+            await interaction.client.users.send(ticket.ticketInfo.opened.by.id, { embeds: [closeEmbed] });
+            await (interaction.channel as TextChannel).delete();
+          }
+        } else if (interaction.customId.startsWith('TICKET_DENY_')) {
+          const uuid = interaction.customId.split('TICKET_DENY_')[1];
+          const ticket = (await getTicket(uuid)).ticket;
+          if (!ticket) throw new Error('Failed to get ticket');
+          if (interaction.user.id !== ticket.ticketInfo.opened.by.id) {
+            throw new Error('NO_ERROR_ID_You did not open this ticket');
+          }
+          if (!(interaction.channel as TextChannel).name.toLowerCase().includes('ticket-')) {
+            throw new Error('NO_ERROR_ID_This is not a ticket channel');
+          }
+          const responseEmbed = new EmbedBuilder()
+            .setColor(other.colors.red as ColorResolvable)
+            .setTitle('Ticket Denied')
+            .setDescription(`Ticket Close request has been denied by ${interaction.user.tag} (${interaction.user.id})`)
             .setTimestamp()
-            .setFooter({
-              text: `by @kathund | ${discord.supportInvite} for support`,
-              iconURL: other.logo,
-            });
-          const loggingChannel = (interaction.guild as Guild).channels.cache.get(
-            discord.channels.ticketLogging
-          ) as TextChannel;
-          if (!loggingChannel) throw new Error('Ticket logging channel not found? Please report this!');
-          await loggingChannel.send({ embeds: [closedLoggingEmbed] });
-          await interaction.client.users.send(ticket.user, { embeds: [userCloseEmbed] });
-          await (interaction.channel as TextChannel).delete();
+            .setFooter({ text: `by @kathund | ${discord.supportInvite} for support`, iconURL: other.logo });
+          const update = await updateTicket({
+            uuid: uuid,
+            ticketInfo: {
+              name: (interaction.channel as TextChannel).name,
+              channelId: (interaction.channel as TextChannel).id,
+              opened: ticket.ticketInfo.opened,
+              closed: null,
+              users: ticket.ticketInfo.users,
+            },
+            messages: ticket.messages,
+            reason: null,
+          });
+          if (!update.success) throw new Error('Failed to save ticket');
+          await interaction.update({ components: [] });
+          await interaction.followUp({ embeds: [responseEmbed], content: `<@&${discord.roles.mod}>` });
         } else if (interaction.customId.startsWith('LOGGING_')) {
           try {
             if (interaction.customId.startsWith('LOGGING_KICK_USER_')) {
-              if (
-                !memberRoles.some((role) =>
-                  ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role)
-                )
-              ) {
+              if (!memberRoles.some((role) => ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role))) {
                 throw new Error('NO_ERROR_ID_You do not have permission to use this button');
               }
               const user = (await (interaction.guild as Guild).members.fetch(
                 interaction.customId.split('LOGGING_KICK_USER_')[1]
               )) as GuildMember;
-
               const userRoles = (interaction.member as GuildMember).roles.cache.map((role) => role.id);
-              if (
-                !userRoles.some((role) =>
-                  ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role)
-                )
-              ) {
+              if (!userRoles.some((role) => ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role))) {
                 throw new Error('NO_ERROR_ID_This person is a staff member');
               }
-
               user.kick(
-                `Kicked by ${
-                  interaction.user.discriminator == '0'
-                    ? interaction.user.username
-                    : `${interaction.user.username}#${interaction.user.discriminator}`
-                } (${interaction.user.id}) for clicking button @ ${interaction.message.url}`
+                `Kicked by ${interaction.user.discriminator == '0' ? interaction.user.username : `${interaction.user.username}#${interaction.user.discriminator}`} (${interaction.user.id}) for clicking button @ ${interaction.message.url}`
               );
-
               const responseEmbed = new EmbedBuilder()
-                .setColor(other.colors.red.hex as ColorResolvable)
+                .setColor(other.colors.red as ColorResolvable)
                 .setTitle('User Kicked')
                 .setDescription(`Successfully kicked <@${user.id}>`)
                 .setTimestamp()
-                .setFooter({
-                  text: `by @kathund | ${discord.supportInvite} for support`,
-                  iconURL: other.logo,
-                });
-
+                .setFooter({ text: `by @kathund | ${discord.supportInvite} for support`, iconURL: other.logo });
               await interaction.reply({ embeds: [responseEmbed], ephemeral: true });
             } else if (interaction.customId.startsWith('LOGGING_BAN_USER_')) {
-              if (
-                !memberRoles.some((role) =>
-                  ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role)
-                )
-              ) {
+              if (!memberRoles.some((role) => ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role))) {
                 throw new Error('NO_ERROR_ID_You do not have permission to use this button');
               }
               const user = (await (interaction.guild as Guild).members.fetch(
                 interaction.customId.split('LOGGING_BAN_USER_')[1]
               )) as GuildMember;
-
               const userRoles = (interaction.member as GuildMember).roles.cache.map((role) => role.id);
-              if (
-                !userRoles.some((role) =>
-                  ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role)
-                )
-              ) {
+              if (!userRoles.some((role) => ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role))) {
                 throw new Error('NO_ERROR_ID_This person is a staff member');
               }
-
               user.ban({
-                reason: `Banned by ${
-                  interaction.user.discriminator == '0'
-                    ? interaction.user.username
-                    : `${interaction.user.username}#${interaction.user.discriminator}`
-                } (${interaction.user.id}) for clicking button @ ${interaction.message.url}`,
+                reason: `Banned by ${interaction.user.discriminator == '0' ? interaction.user.username : `${interaction.user.username}#${interaction.user.discriminator}`} (${interaction.user.id}) for clicking button @ ${interaction.message.url}`,
               });
-
               const responseEmbed = new EmbedBuilder()
-                .setColor(other.colors.red.hex as ColorResolvable)
+                .setColor(other.colors.red as ColorResolvable)
                 .setTitle('User Banned')
                 .setDescription(`Successfully banned <@${user.id}>`)
                 .setTimestamp()
-                .setFooter({
-                  text: `by @kathund | ${discord.supportInvite} for support`,
-                  iconURL: other.logo,
-                });
-
+                .setFooter({ text: `by @kathund | ${discord.supportInvite} for support`, iconURL: other.logo });
               await interaction.reply({ embeds: [responseEmbed], ephemeral: true });
             }
           } catch (error: any) {
             if (String(error).includes('NO_ERROR_ID_')) {
               errorMessage(error);
               const errorEmbed = new EmbedBuilder()
-                .setColor(other.colors.red.hex as ColorResolvable)
+                .setColor(other.colors.red as ColorResolvable)
                 .setTitle('An error occurred')
-                .setDescription(`Error Info - \`${cleanMessage(error)}\``)
-                .setFooter({
-                  text: `by @kathund | ${discord.supportInvite} for support`,
-                  iconURL: other.logo,
-                });
+                .setDescription(`Error Info - ${cleanMessage(error)}`)
+                .setFooter({ text: `by @kathund | ${discord.supportInvite} for support`, iconURL: other.logo });
               const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
                 new ButtonBuilder().setLabel('Support Discord').setURL(discord.supportInvite).setStyle(ButtonStyle.Link)
               );
@@ -731,17 +444,12 @@ export const execute = async (interaction: Interaction) => {
               errorMessage(`Error Id - ${errorIdButtons}`);
               errorMessage(error);
               const errorEmbed = new EmbedBuilder()
-                .setColor(other.colors.red.hex as ColorResolvable)
+                .setColor(other.colors.red as ColorResolvable)
                 .setTitle('An error occurred')
                 .setDescription(
-                  `Use </report-bug:${
-                    discord.commands['report-bug']
-                  }> to report it\nError id - ${errorIdButtons}\nError Info - \`${cleanMessage(error)}\``
+                  `Use </report-bug:${discord.commands['report-bug']}> to report it\nError id - ${errorIdButtons}\nError Info - \`${cleanMessage(error)}\``
                 )
-                .setFooter({
-                  text: `by @kathund | ${discord.supportInvite} for support`,
-                  iconURL: other.logo,
-                });
+                .setFooter({ text: `by @kathund | ${discord.supportInvite} for support`, iconURL: other.logo });
               const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
                 new ButtonBuilder().setLabel('Support Discord').setURL(discord.supportInvite).setStyle(ButtonStyle.Link)
               );
@@ -757,13 +465,10 @@ export const execute = async (interaction: Interaction) => {
         if (String(error).includes('NO_ERROR_ID_')) {
           errorMessage(error);
           const errorEmbed = new EmbedBuilder()
-            .setColor(other.colors.red.hex as ColorResolvable)
+            .setColor(other.colors.red as ColorResolvable)
             .setTitle('An error occurred')
-            .setDescription(`Error Info - \`${cleanMessage(error)}\``)
-            .setFooter({
-              text: `by @kathund | ${discord.supportInvite} for support`,
-              iconURL: other.logo,
-            });
+            .setDescription(`Error Info - ${cleanMessage(error)}`)
+            .setFooter({ text: `by @kathund | ${discord.supportInvite} for support`, iconURL: other.logo });
           const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
             new ButtonBuilder().setLabel('Support Discord').setURL(discord.supportInvite).setStyle(ButtonStyle.Link)
           );
@@ -778,17 +483,12 @@ export const execute = async (interaction: Interaction) => {
           errorMessage(`Error Id - ${errorIdButtons}`);
           errorMessage(error);
           const errorEmbed = new EmbedBuilder()
-            .setColor(other.colors.red.hex as ColorResolvable)
+            .setColor(other.colors.red as ColorResolvable)
             .setTitle('An error occurred')
             .setDescription(
-              `Use </report-bug:${
-                discord.commands['report-bug']
-              }> to report it\nError id - ${errorIdButtons}\nError Info - \`${cleanMessage(error)}\``
+              `Use </report-bug:${discord.commands['report-bug']}> to report it\nError id - ${errorIdButtons}\nError Info - \`${cleanMessage(error)}\``
             )
-            .setFooter({
-              text: `by @kathund | ${discord.supportInvite} for support`,
-              iconURL: other.logo,
-            });
+            .setFooter({ text: `by @kathund | ${discord.supportInvite} for support`, iconURL: other.logo });
           const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
             new ButtonBuilder().setLabel('Support Discord').setURL(discord.supportInvite).setStyle(ButtonStyle.Link)
           );
@@ -797,6 +497,77 @@ export const execute = async (interaction: Interaction) => {
           } else {
             await interaction.reply({ embeds: [errorEmbed], components: [row], ephemeral: true });
           }
+        }
+      }
+    } else if (interaction.type === InteractionType.ModalSubmit) {
+      if (interaction.customId.includes('CLOSE_INPUT_')) {
+        if (!memberRoles.some((role) => ([discord.roles.mod, discord.roles.admin, discord.roles.dev] as string[]).includes(role))) {
+          throw new Error('You do not have permission to use this command');
+        }
+        await interaction.reply({ content: 'Closing ticket...', ephemeral: true });
+        const reason = interaction.fields.getTextInputValue('REASON');
+        const uuid = interaction.customId.split('CLOSE_INPUT_')[1];
+        const ticket = (await getTicket(uuid)).ticket;
+        if (!ticket) throw new Error('Failed to get ticket');
+        if (ticket.ticketInfo.closed === null) {
+          const messages = await (interaction.channel as TextChannel).messages.fetch();
+          let changed = Array<Message>();
+          messages.forEach((message) => {
+            changed.push({
+              author: {
+                username: message.author.username,
+                id: message.author.id,
+                displayName: message.author.displayName,
+                avatar: message.author.avatarURL(),
+                bot: message.author.bot,
+              },
+              content: message.content,
+              timestamp: message.createdTimestamp,
+            });
+          });
+          changed = changed.sort((a, b) => a.timestamp - b.timestamp);
+          const update = await updateTicket({
+            uuid: uuid,
+            ticketInfo: {
+              name: (interaction.channel as TextChannel).name,
+              channelId: (interaction.channel as TextChannel).id,
+              opened: ticket.ticketInfo.opened,
+              closed: {
+                timestamp: toFixed(new Date().getTime() / 1000, 0),
+                reason: reason,
+                by: {
+                  username: interaction.user.username,
+                  id: interaction.user.id,
+                  displayName: interaction.user.displayName,
+                  avatar: interaction.user.avatarURL(),
+                  bot: interaction.user.bot,
+                },
+              },
+              users: ticket.ticketInfo.users,
+            },
+            messages: changed,
+            reason: null,
+          });
+          if (!update.success) throw new Error('Failed to save ticket');
+          const closeEmbed = new EmbedBuilder()
+            .setColor(other.colors.red as ColorResolvable)
+            .setTitle('Ticket Closed')
+            .addFields(
+              { name: 'Reason', value: reason, inline: true },
+              { name: 'Ticket ID', value: uuid, inline: true },
+              { name: 'Transcript', value: `https://tickets.kath.lol/${uuid}`, inline: true },
+              { name: 'Ticket Opened', value: `<t:${ticket.ticketInfo.opened.timestamp}:R>`, inline: true },
+              { name: 'Ticket Opened By', value: `<@${ticket.ticketInfo.opened.by.id}>`, inline: true },
+              { name: 'Ticket Closed', value: `<t:${toFixed(new Date().getTime() / 1000, 0)}:R>`, inline: true },
+              { name: 'Ticket Closed By', value: `<@${interaction.user.id}>`, inline: true }
+            )
+            .setTimestamp()
+            .setFooter({ text: `by @kathund | ${discord.supportInvite} for support`, iconURL: other.logo });
+          const loggingChannel = (interaction.guild as Guild).channels.cache.get(discord.channels.ticketLogging) as TextChannel;
+          if (!loggingChannel) throw new Error('Ticket logging channel not found? Please report this!');
+          await loggingChannel.send({ embeds: [closeEmbed] });
+          await interaction.client.users.send(ticket.ticketInfo.opened.by.id, { embeds: [closeEmbed] });
+          await (interaction.channel as TextChannel).delete();
         }
       }
     }
