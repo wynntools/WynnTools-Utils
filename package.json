@@ -19,7 +19,7 @@
     "discord.js": "^14.14.1",
     "mongo-sanitize": "^1.1.0",
     "mongoose": "^8.1.1",
-    "node-cron": "^3.0.3",
+    "node-cron": "^4.0.0",
     "winston": "^3.11.0"
   },
   "devDependencies": {
